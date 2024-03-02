@@ -1,18 +1,9 @@
 defmodule O11y do
-  @moduledoc """
-  Documentation for `O11y`.
-  """
+  @moduledoc false
 
-  @doc """
-  Hello world.
+  require OpenTelemetry.Tracer, as: Tracer
 
-  ## Examples
-
-      iex> O11y.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def set_attribute(key, value) do
+    Tracer.set_attribute(key, value)
   end
 end
