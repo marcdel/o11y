@@ -8,9 +8,17 @@ defmodule O11yTest do
     test "appends the given attribute to the span" do
       Tracer.with_span "do_stuff" do
         O11y.set_attribute(:id, 123)
+        O11y.set_attribute(:enabled?, true)
+        O11y.set_attribute(:balance, 24.75)
       end
 
-      assert_span("do_stuff", attributes: %{id: 123})
+      expected = %{
+        id: 123,
+        enabled?: true,
+        balance: 24.75
+      }
+
+      assert_span("do_stuff", attributes: expected)
     end
   end
 end

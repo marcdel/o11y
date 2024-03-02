@@ -43,7 +43,7 @@ defmodule O11y.TestHelper do
 
         if Keyword.has_key?(opts, :attributes) do
           attributes = opts[:attributes]
-          assert ^attributes = attributes(attrs)
+          assert attributes(attrs) == attributes
         end
       end
 

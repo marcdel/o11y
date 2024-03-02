@@ -4,6 +4,7 @@ defmodule O11y do
   require OpenTelemetry.Tracer, as: Tracer
 
   def set_attribute(key, value) do
+    value = O11y.SpanAttributes.get(value)
     Tracer.set_attribute(key, value)
   end
 end
