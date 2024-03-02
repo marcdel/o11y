@@ -23,20 +23,34 @@ defmodule O11y.SpanAttributesTest do
     end
   end
 
-  describe "implementing the protocol in structs" do
-    defmodule BasicModule do
+  describe "deriving the protocol in structs" do
+    defmodule Basic do
+      @derive O11y.SpanAttributes
       defstruct [:id, :name]
-
-      defimpl O11y.SpanAttributes do
-        def get(bm) do
-          %{id: bm.id, name: bm.name}
-        end
-      end
     end
 
-    test "derives the protocol for structs" do
-      bm = %BasicModule{id: 1, name: "basic"}
-      assert SpanAttributes.get(bm) == %{id: 1, name: "basic"}
+    defmodule Only do
+      @derive {O11y.SpanAttributes, only: [:id, :name]}
+      defstruct [:id, :name, :email, :password]
+    end
+
+    defmodule Except do
+      @derive {O11y.SpanAttributes, except: [:email, :password]}
+      defstruct [:id, :name, :email, :password]
+    end
+
+    test "returns all fields if no options are given" do
+      assert SpanAttributes.get(%Basic{id: 1, name: "basic"}) == %{id: 1, name: "basic"}
+    end
+
+    test "returns only fields specified in the only option" do
+      thing = %Only{id: 1, name: "only", email: "only@email.com", password: "secret"}
+      assert SpanAttributes.get(thing) == %{id: 1, name: "only"}
+    end
+
+    test "returns all fields except those specified in the except option" do
+      thing = %Except{id: 1, name: "except", email: "except@email.com", password: "secret"}
+      assert SpanAttributes.get(thing) == %{id: 1, name: "except"}
     end
   end
 end

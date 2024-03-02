@@ -19,6 +19,25 @@ defprotocol O11y.SpanAttributes do
 end
 
 defimpl O11y.SpanAttributes, for: Any do
+  defmacro __deriving__(module, struct, options) do
+    fields = Map.keys(struct) -- [:__exception__, :__struct__]
+    only = Keyword.get(options, :only, fields)
+    except = Keyword.get(options, :except, [])
+
+    filtered_fields =
+      fields
+      |> Enum.reject(&(&1 in except))
+      |> Enum.filter(&(&1 in only))
+
+    quote do
+      defimpl O11y.SpanAttributes, for: unquote(module) do
+        def get(var!(struct)) do
+          Map.take(var!(struct), unquote(filtered_fields))
+        end
+      end
+    end
+  end
+
   defguard is_otlp_value(value)
            when is_binary(value) or is_integer(value) or is_boolean(value) or is_float(value)
 
