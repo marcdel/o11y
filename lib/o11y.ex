@@ -7,4 +7,9 @@ defmodule O11y do
     value = O11y.SpanAttributes.get(value)
     Tracer.set_attribute(key, value)
   end
+
+  def set_attributes(value) do
+    value = O11y.SpanAttributes.get(value)
+    Tracer.set_attributes(value)
+  end
 end
