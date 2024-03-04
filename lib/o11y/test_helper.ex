@@ -42,8 +42,9 @@ defmodule O11y.TestHelper do
         assert_receive {:span, span(name: ^name, attributes: attrs)}
 
         if Keyword.has_key?(opts, :attributes) do
-          attributes = opts[:attributes]
-          assert attributes(attrs) == attributes
+          span_attributes = attributes(attrs)
+          expected_attributes = opts[:attributes]
+          assert span_attributes == expected_attributes
         end
       end
 
