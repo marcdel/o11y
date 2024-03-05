@@ -69,14 +69,20 @@ defmodule O11y.SpanAttributesTest do
 
     defimpl O11y.SpanAttributes, for: Fancy do
       def get(%{url: url, token: token}) do
-        masked_token = token |> String.slice(-4, 4) |> String.pad_leading(String.length(token), "*")
+        masked_token =
+          token |> String.slice(-4, 4) |> String.pad_leading(String.length(token), "*")
+
         [{"url", url}, {"token", masked_token}]
       end
     end
 
     test "returns the attributes from the manual implementation" do
       fancy_thing = %Fancy{url: "https://example.com", token: "1234567890"}
-      assert SpanAttributes.get(fancy_thing) == [{"url", "https://example.com"}, {"token", "******7890"}]
+
+      assert SpanAttributes.get(fancy_thing) == [
+               {"url", "https://example.com"},
+               {"token", "******7890"}
+             ]
     end
   end
 end
