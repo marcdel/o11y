@@ -1,21 +1,30 @@
 # O11y
 
-**TODO: Add description**
+Convenience functions and other things to (hopefully) make your life easier when working with OpenTelemetry in Elixir.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `o11y` to your list of dependencies in `mix.exs`:
+Add `o11y` to your list of dependencies in `mix.exs`.
+We include the `opentelemetry_api` package, but you'll need to add `opentelemetry` yourself in order to report spans and traces:
 
 ```elixir
 def deps do
   [
-    {:o11y, "~> 0.1.0"}
+    {:o11y, "~> 0.1.0"},
+    {:opentelemetry, "~> 1.2"},
+    {:opentelemetry_exporter, "~> 1.4"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/o11y>.
+## Development
+
+`make check` before you commit! If you'd prefer to do it manually:
+
+* `mix do deps.get, deps.unlock --unused, deps.clean --unused` if you change dependencies
+* `mix compile --warnings-as-errors` for a stricter compile
+* `mix coveralls.html` to check for test coverage
+* `mix credo` to suggest more idiomatic style for your code
+* `mix dialyzer` to find problems typing might reveal… albeit *slowly*
+* `mix docs` to generate documentation
 

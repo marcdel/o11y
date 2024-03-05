@@ -4,20 +4,42 @@ defprotocol O11y.SpanAttributes do
   The easiest way to use this is to use the `@derive` attribute on a struct as shown below,
   but you can also implement the protocol manually if you need to define custom behavior.
 
-    defmodule Basic do
-      @derive O11y.SpanAttributes
-      defstruct [:id, :name]
-    end
+  With the basic derive, all fields in the struct will be returned as attributes:
+  ```elixir
+  defmodule Basic do
+    @derive O11y.SpanAttributes
+    defstruct [:id, :name]
+  end
+  ```
 
-    defmodule Only do
-      @derive {O11y.SpanAttributes, only: [:id, :name]}
-      defstruct [:id, :name, :email, :password]
-    end
+  You can also use the `only` and `except` options to include or exclude specific fields:
+  ```elixir
+  defmodule Only do
+    @derive {O11y.SpanAttributes, only: [:id, :name]}
+    defstruct [:id, :name, :email, :password]
+  end
+  ```
 
-    defmodule Except do
-      @derive {O11y.SpanAttributes, except: [:email, :password]}
-      defstruct [:id, :name, :email, :password]
+  ```elixir
+  defmodule Except do
+    @derive {O11y.SpanAttributes, except: [:email, :password]}
+    defstruct [:id, :name, :email, :password]
+  end
+  ```
+
+  Or you can manually implement the protocol for a struct:
+  ```elixir
+  defmodule Fancy do
+    defstruct [:url, :token]
+  end
+
+  defimpl O11y.SpanAttributes, for: Fancy do
+    def get(%{url: url, token: token}) do
+      masked_token = token |> String.slice(-4, 4) |> String.pad_leading(String.length(token), "*")
+      [{"url", url}, {"token", masked_token}]
     end
+  end
+  ```
   """
 
   @doc """

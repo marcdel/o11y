@@ -1,5 +1,7 @@
 defmodule O11y do
-  @moduledoc false
+  @moduledoc """
+  A module to help with OpenTelemetry tracing.
+  """
 
   require OpenTelemetry.Tracer, as: Tracer
 
