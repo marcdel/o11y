@@ -4,6 +4,8 @@ defmodule O11yTest do
 
   setup [:otel_pid_reporter]
 
+  doctest O11y
+
   defmodule Regular do
     defstruct [:id, :name, :email, :password]
   end
@@ -92,6 +94,26 @@ defmodule O11yTest do
       end
 
       assert_span("login", attributes: %{"user.id" => 123, "user.name" => "Alice"})
+    end
+  end
+
+  describe "record_exception" do
+    test "records an exception" do
+      Tracer.with_span "checkout" do
+        O11y.record_exception(%RuntimeError{message: "something went wrong"})
+      end
+
+      assert_span("checkout", status: :error)
+    end
+
+    test "sets the trace status to error" do
+      Tracer.with_span "checkout" do
+        O11y.record_exception(%RuntimeError{message: "something went wrong"})
+      end
+
+      span(events: events) = assert_span("checkout")
+      assert [event(name: "exception", attributes: attributes)] = events(events)
+      assert %{"exception.message": "something went wrong"} = attributes(attributes)
     end
   end
 end

@@ -39,17 +39,31 @@ defmodule O11y.TestHelper do
       end
 
       def assert_span(name, opts \\ []) do
-        assert_receive {:span, span(name: ^name, attributes: attrs)}
+        assert_receive {:span,
+                        span(
+                          name: ^name,
+                          status: status,
+                          attributes: attrs,
+                          events: events
+                        ) = span}
+
+        if Keyword.has_key?(opts, :status) do
+          expected_status = opts[:status]
+          assert status(status) == expected_status
+        end
 
         if Keyword.has_key?(opts, :attributes) do
           span_attributes = attributes(attrs)
           expected_attributes = opts[:attributes]
           assert span_attributes == expected_attributes
         end
+
+        span
       end
 
+      def status({:status, status, _}), do: status
       def links({:links, _, _, _, links}), do: links
-      def events({:events, _, _, _, events}), do: events
+      def events({:events, _, _, _, _, events}), do: events
       def attributes({:attributes, _, _, _, attributes}), do: attributes
     end
   end
