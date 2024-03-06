@@ -4,7 +4,7 @@
 # WARNING: you'll need the 18.2GB GitHub-compatible Docker image:
 #   act -P ubuntu-18.04=nektos/act-environments-ubuntu:18.04
 
-name: Elixir CI
+name: CI
 
 on:
   push:
