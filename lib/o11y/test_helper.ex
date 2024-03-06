@@ -1,5 +1,26 @@
 defmodule O11y.TestHelper do
-  @moduledoc false
+  @moduledoc """
+  Provides a few helper functions to make testing with OpenTelemetry easier.
+
+  Example:
+
+  ```elixir
+  defmodule MyTest do
+    use ExUnit.Case, async: true
+    use O11y.TestHelper
+
+    setup [:otel_pid_reporter]
+
+    test "appends the given attribute to the span" do
+      Tracer.with_span "checkout" do
+        O11y.set_attribute(:id, 123)
+      end
+
+      assert_span("checkout", attributes: %{id: 123})
+    end
+  end
+  ```
+  """
 
   defmacro __using__(_) do
     quote do
@@ -20,6 +41,15 @@ defmodule O11y.TestHelper do
       @fields Record.extract(:event, from_lib: "opentelemetry/include/otel_span.hrl")
       Record.defrecordp(:event, @fields)
 
+      @doc """
+      Sets up OpenTelemetry to use the pid exporter and ensures it is stopped after the test.
+      When spans are exported, a message is sent to the test pid allowing you to `assert_receive` on a tuple with the span.
+
+      This should be called in the `setup` block of your test module.
+      ```elixir
+      setup [:otel_pid_reporter]
+      ```
+      """
       def otel_pid_reporter(_) do
         Application.load(:opentelemetry)
 
@@ -38,6 +68,27 @@ defmodule O11y.TestHelper do
         end)
       end
 
+      @doc """
+      Asserts that a span with the given name was exported and optionally checks the status and attributes.
+
+      Example:
+      ```elixir
+      assert_span("checkout", attributes: %{"id" => 123})
+      assert_span("checkout", status: :error)
+      ```
+
+      It returns the matched span record so you can make additional assertions. The easiest way is to pattern match by creating a span record and bind the properties you want to assert on.
+      You can use the included span, link, and event records to help with this, as well as the status, links, events, and attributes functions.
+
+      Examples:
+      ```elixir
+      span(status: status, events: events) = assert_span("checkout")
+
+      assert status(status) == :error
+      assert [event(name: "exception", attributes: attributes)] = events(events)
+      assert %{"exception.message": "something went wrong"} = attributes(attributes)
+      ```
+      """
       def assert_span(name, opts \\ []) do
         assert_receive {:span,
                         span(

@@ -34,10 +34,10 @@ defmodule O11y.MixProject do
 
   defp docs do
     [
-      api_reference: false,
       authors: ["Marc Delagrammatikas"],
       canonical: "http://hexdocs.pm/o11y",
       main: "O11y",
+      logo: "o11y.png",
       source_ref: "v#{@version}"
     ]
   end
