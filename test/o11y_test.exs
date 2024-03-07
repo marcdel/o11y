@@ -2,8 +2,6 @@ defmodule O11yTest do
   use ExUnit.Case, async: true
   use O11y.TestHelper
 
-  setup [:otel_pid_reporter]
-
   doctest O11y
 
   defmodule Regular do
