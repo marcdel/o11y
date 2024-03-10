@@ -122,10 +122,16 @@ defmodule O11y.TestHelper do
         assert_receive {:span,
                         span(
                           name: ^name,
+                          trace_id: trace_id,
                           status: status,
                           attributes: attrs,
                           events: _events
                         ) = span}
+
+        if Keyword.has_key?(opts, :trace_id) do
+          expected_trace_id = opts[:trace_id]
+          assert trace_id == expected_trace_id
+        end
 
         if Keyword.has_key?(opts, :status) do
           expected_status = opts[:status]

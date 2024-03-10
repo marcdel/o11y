@@ -113,4 +113,38 @@ defmodule O11y do
 
     exception
   end
+
+  @doc """
+  This function is typically used to "inject" trace context information into http headers such that
+  the trace can be continued in another service. However, it can also be used to link span in cases where
+  OpenTelemetry.Ctx.attach/1 will not work (such as when the parent span has already ended or been removed from the dictionary).
+
+  Example:
+  ```elixir
+  iex> res = Tracer.with_span "some_span", do: O11y.get_distributed_trace_ctx()
+  iex> [{"traceparent", _}] = res
+  ```
+  """
+  def get_distributed_trace_ctx, do: :otel_propagator_text_map.inject([])
+
+  @doc """
+  This is the counterpart to `get_distributed_trace_ctx/0`. It is used to "extract" trace context information from http headers.
+  This context information is stored in a string so it can be passed around by other means as well.
+
+  Example:
+  ```elixir
+  iex> O11y.attach_distributed_trace_ctx([traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"])
+  iex> O11y.attach_distributed_trace_ctx("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")
+  iex> O11y.attach_distributed_trace_ctx(nil)
+  ```
+  """
+  def attach_distributed_trace_ctx(nil), do: nil
+
+  def attach_distributed_trace_ctx(dist_trace_ctx) when is_list(dist_trace_ctx) do
+    :otel_propagator_text_map.extract(dist_trace_ctx)
+  end
+
+  def attach_distributed_trace_ctx(dist_trace_ctx) when is_binary(dist_trace_ctx) do
+    :otel_propagator_text_map.extract([{"traceparent", dist_trace_ctx}])
+  end
 end

@@ -96,7 +96,7 @@ defmodule O11yTest do
   end
 
   describe "record_exception" do
-    test "records an exception" do
+    test "sets the trace status to error" do
       Tracer.with_span "checkout" do
         O11y.record_exception(%RuntimeError{message: "something went wrong"})
       end
@@ -104,7 +104,7 @@ defmodule O11yTest do
       assert_span("checkout", status: :error)
     end
 
-    test "sets the trace status to error" do
+    test "records an exception" do
       Tracer.with_span "checkout" do
         O11y.record_exception(%RuntimeError{message: "something went wrong"})
       end
@@ -112,6 +112,32 @@ defmodule O11yTest do
       span(events: events) = assert_span("checkout")
       assert [event(name: "exception", attributes: attributes)] = events(events)
       assert %{"exception.message": "something went wrong"} = attributes(attributes)
+    end
+  end
+
+  describe "distributed_trace_ctx" do
+    test "can attach trace context from disconnected remote trace" do
+      ctx = Tracer.with_span("caller", do: O11y.get_distributed_trace_ctx())
+
+      O11y.attach_distributed_trace_ctx(ctx)
+      Tracer.with_span("callee", do: :ok)
+
+      span = assert_span("caller")
+      span(trace_id: trace_id) = span
+
+      assert_span("callee", trace_id: trace_id)
+    end
+
+    test "attach can take just the traceparent binary" do
+      [{"traceparent", ctx}] = Tracer.with_span("caller", do: O11y.get_distributed_trace_ctx())
+
+      O11y.attach_distributed_trace_ctx(ctx)
+      Tracer.with_span("callee", do: :ok)
+
+      span = assert_span("caller")
+      span(trace_id: trace_id) = span
+
+      assert_span("callee", trace_id: trace_id)
     end
   end
 end
