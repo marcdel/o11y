@@ -115,6 +115,22 @@ defmodule O11y do
   end
 
   @doc """
+  Sets the status of the current span to error
+  """
+  def set_error do
+    Tracer.set_status(OpenTelemetry.status(:error))
+  end
+
+  @doc """
+  Sets the status of the current span to error, and sets an error attribute
+  """
+  def set_error(error) do
+    Tracer.set_attribute(:error, error)
+    Tracer.set_status(OpenTelemetry.status(:error))
+    error
+  end
+
+  @doc """
   This function is typically used to "inject" trace context information into http headers such that
   the trace can be continued in another service. However, it can also be used to link span in cases where
   OpenTelemetry.Ctx.attach/1 will not work (such as when the parent span has already ended or been removed from the dictionary).

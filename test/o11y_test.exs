@@ -115,6 +115,25 @@ defmodule O11yTest do
     end
   end
 
+  describe "set_error" do
+    test "sets the trace status to error" do
+      Tracer.with_span "checkout" do
+        O11y.set_error()
+      end
+
+      assert_span("checkout", status: :error)
+    end
+
+    test "sets an error attribute if given one" do
+      Tracer.with_span "checkout" do
+        O11y.set_error("something went wrong")
+      end
+
+      span(attributes: attributes) = assert_span("checkout")
+      assert %{error: "something went wrong"} = attributes(attributes)
+    end
+  end
+
   describe "distributed_trace_ctx" do
     test "can attach trace context from disconnected remote trace" do
       ctx = Tracer.with_span("caller", do: O11y.get_distributed_trace_ctx())
