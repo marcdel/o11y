@@ -1,7 +1,7 @@
 defmodule O11y.MixProject do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.1.2"
   @github_page "https://github.com/marcdel/o11y"
 
   def project do
@@ -61,7 +61,7 @@ defmodule O11y.MixProject do
       links: %{
         "GitHub" => @github_page,
         "marcdel.com" => "https://www.marcdel.com",
-        "OpenTelemetry Erlang SDK" => "https://github.com/open-telemetry/opentelemetry-erlang"
+        "OpenTelemetry Erlang" => "https://github.com/open-telemetry/opentelemetry-erlang"
       },
       maintainers: ["Marc Delagrammatikas"]
     ]
