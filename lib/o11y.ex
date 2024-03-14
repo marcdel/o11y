@@ -6,6 +6,49 @@ defmodule O11y do
   require OpenTelemetry.Tracer, as: Tracer
 
   @doc """
+  Starts a new span and makes it the current active span of the current process.
+
+  This is a little tricky because it actually returns the parent span, not the new span.
+  However, this is because we want to be able to end the span and set the current span back to the parent which is not the default behavior.
+  The API `end_span` function doesn't take a span to end anyway (though it seems like it should)
+  so you sort of use this as I would expect the actual API to work and get similar behavior to `with_span`
+
+  Example:
+
+  ```elixir
+  iex> Tracer.with_span "checkout" do
+  iex>  parent = O11y.start_span("calculate_tax")
+  iex>  gnarly_calculations()
+  iex>  O11y.end_span(parent)
+  iex> end
+  ```
+  """
+  @spec start_span(String.t(), Keyword.t()) :: OpenTelemetry.span_ctx()
+  def start_span(name, opts \\ []) do
+    parent_span = Tracer.current_span_ctx()
+    span = Tracer.start_span(name, opts)
+    Tracer.set_current_span(span)
+
+    parent_span
+  end
+
+  @doc """
+  Ends the current span and marks the given parent span as current.
+
+  Example:
+
+  ```elixir
+  iex> span = O11y.start_span("checkout")
+  iex> O11y.end_span(span)
+  ```
+  """
+  @spec end_span(OpenTelemetry.span_ctx()) :: OpenTelemetry.span_ctx()
+  def end_span(parent_span) do
+    Tracer.end_span()
+    Tracer.set_current_span(parent_span)
+  end
+
+  @doc """
   Sets the given attribute on the current span. If the value is not a valid OTLP type,
   it will be converted to a string with `inspect`.
 

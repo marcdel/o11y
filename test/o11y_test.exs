@@ -13,6 +13,71 @@ defmodule O11yTest do
     defstruct [:id, :name, :email, :password]
   end
 
+  describe "start_span" do
+    test "starts a span with the given name" do
+      O11y.start_span("checkout")
+      Tracer.end_span()
+
+      assert_span("checkout")
+    end
+
+    test "forwards opts to Tracer.start_span" do
+      O11y.start_span("checkout", attributes: %{id: 123, name: "Alice"})
+      Tracer.end_span()
+
+      assert_span("checkout", attributes: %{id: 123, name: "Alice"})
+    end
+
+    test "sets the new span as current" do
+      Tracer.with_span "checkout", status: :error do
+        parent = Tracer.current_span_ctx()
+        O11y.start_span("calculate_tax")
+        child = Tracer.current_span_ctx()
+
+        assert child != parent
+
+        Tracer.end_span()
+      end
+    end
+
+    test "returns the parent span to be passed to end_span" do
+      Tracer.with_span "checkout", status: :error do
+        expected = Tracer.current_span_ctx()
+        parent = O11y.start_span("calculate_tax")
+
+        assert parent == expected
+
+        Tracer.end_span()
+      end
+    end
+  end
+
+  describe "end_span" do
+    test "ends the current span" do
+      O11y.start_span("checkout")
+      |> O11y.end_span()
+
+      assert_span("checkout")
+    end
+
+    test "sets the current span to the given parent span" do
+      Tracer.with_span "checkout", status: :error do
+        parent = O11y.start_span("calculate_tax")
+
+        O11y.end_span(parent)
+        assert parent == Tracer.current_span_ctx()
+      end
+    end
+
+    test "returns the current (parent) span to match the Tracer.end_span interface" do
+      Tracer.with_span "checkout", status: :error do
+        parent = O11y.start_span("calculate_tax")
+
+        assert O11y.end_span(parent) == parent
+      end
+    end
+  end
+
   describe "set_attribute" do
     test "appends the given attribute to the span" do
       Tracer.with_span "checkout" do
