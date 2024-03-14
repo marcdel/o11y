@@ -18,7 +18,7 @@ defmodule O11y do
   ```elixir
   iex> Tracer.with_span "checkout" do
   iex>  parent = O11y.start_span("calculate_tax")
-  iex>  gnarly_calculations()
+  iex>  # gnarly_calculations()
   iex>  O11y.end_span(parent)
   iex> end
   ```
