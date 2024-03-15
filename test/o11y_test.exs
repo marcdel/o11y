@@ -2,6 +2,8 @@ defmodule O11yTest do
   use ExUnit.Case, async: true
   use O11y.TestHelper
 
+  import ExUnit.CaptureLog
+
   doctest O11y
 
   defmodule Regular do
@@ -161,15 +163,15 @@ defmodule O11yTest do
   end
 
   describe "record_exception" do
-    test "sets the trace status to error" do
+    test "sets the span status to error" do
       Tracer.with_span "checkout" do
         O11y.record_exception(%RuntimeError{message: "something went wrong"})
       end
 
-      assert_span("checkout", status: :error)
+      assert_span("checkout", status: {:error, "something went wrong"})
     end
 
-    test "records an exception" do
+    test "adds an exception event to the span" do
       Tracer.with_span "checkout" do
         O11y.record_exception(%RuntimeError{message: "something went wrong"})
       end
@@ -189,13 +191,34 @@ defmodule O11yTest do
       assert_span("checkout", status: :error)
     end
 
-    test "sets an error attribute if given one" do
+    test "sets a message if given one" do
       Tracer.with_span "checkout" do
         O11y.set_error("something went wrong")
       end
 
-      span(attributes: attributes) = assert_span("checkout")
-      assert %{error: "something went wrong"} = attributes(attributes)
+      assert_span("checkout", status: {:error, "something went wrong"})
+    end
+
+    test "sets a message to the exception message if given an exception" do
+      Tracer.with_span "checkout" do
+        O11y.set_error(%RuntimeError{message: "something went wrong"})
+      end
+
+      assert_span("checkout", status: {:error, "something went wrong"})
+    end
+
+    test "does not set a message if given something other than a binary" do
+      {_, log} =
+        with_log(fn ->
+          Tracer.with_span "checkout" do
+            O11y.set_error(123)
+          end
+        end)
+
+      assert_span("checkout", status: :error)
+
+      assert log =~
+               "Tracer.set_status only accepts a binary error message. The given value was: 123"
     end
   end
 

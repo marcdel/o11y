@@ -4,6 +4,7 @@ defmodule O11y do
   """
 
   require OpenTelemetry.Tracer, as: Tracer
+  require Logger
 
   @doc """
   Starts a new span and makes it the current active span of the current process.
@@ -150,9 +151,9 @@ defmodule O11y do
     :undefined}
   ```
   """
-  def record_exception(exception) do
+  def record_exception(exception) when is_exception(exception) do
     Tracer.record_exception(exception)
-    Tracer.set_status(OpenTelemetry.status(:error))
+    set_error(exception.message)
 
     exception
   end
@@ -165,12 +166,38 @@ defmodule O11y do
   end
 
   @doc """
-  Sets the status of the current span to error, and sets an error attribute
+  Sets the status of the current span to error, and sets an error message.
+
+  Example:
+
+  ```elixir
+  iex> O11y.set_error("something went wrong")
+  "something went wrong"
+  ```
   """
-  def set_error(error) do
-    Tracer.set_attribute(:error, error)
-    Tracer.set_status(OpenTelemetry.status(:error))
-    error
+  def set_error(message) when is_binary(message) do
+    Tracer.set_status(:error, message)
+    message
+  end
+
+  def set_error(exception) when is_exception(exception) do
+    Logger.info(
+      "This does not add an exception event to the span. You might want `O11y.record_exception/1` instead."
+    )
+
+    Tracer.set_status(:error, exception.message)
+    exception
+  end
+
+  def set_error(message) do
+    # This would result in error: false, status_code: 0, and a missing status_message
+    # We fall back to just setting the status and omitting the error message
+    Logger.warning(
+      "Tracer.set_status only accepts a binary error message. The given value was: #{inspect(message)}"
+    )
+
+    set_error()
+    message
   end
 
   @doc """
