@@ -81,24 +81,10 @@ defmodule O11y.TestHelper do
     quote do
       @behaviour O11y.TestHelper
 
+      use O11y.RecordDefinitions
       require OpenTelemetry.Tracer, as: Tracer
-      require Record
 
       setup [:otel_pid_reporter]
-
-      # https://github.com/open-telemetry/opentelemetry-erlang/blob/main/apps/opentelemetry_api/include/opentelemetry.hrl
-      @fields Record.extract(:span_ctx, from_lib: "opentelemetry_api/include/opentelemetry.hrl")
-      Record.defrecordp(:span_ctx, @fields)
-
-      # https://github.com/open-telemetry/opentelemetry-erlang/blob/main/apps/opentelemetry/include/otel_span.hrl
-      @fields Record.extract(:span, from_lib: "opentelemetry/include/otel_span.hrl")
-      Record.defrecordp(:span, @fields)
-
-      @fields Record.extract(:link, from_lib: "opentelemetry/include/otel_span.hrl")
-      Record.defrecordp(:link, @fields)
-
-      @fields Record.extract(:event, from_lib: "opentelemetry/include/otel_span.hrl")
-      Record.defrecordp(:event, @fields)
 
       def otel_pid_reporter(_) do
         Application.load(:opentelemetry)
@@ -146,11 +132,6 @@ defmodule O11y.TestHelper do
 
         span
       end
-
-      def status({:status, status, _}), do: status
-      def links({:links, _, _, _, links}), do: links
-      def events({:events, _, _, _, _, events}), do: events
-      def attributes({:attributes, _, _, _, attributes}), do: attributes
     end
   end
 end

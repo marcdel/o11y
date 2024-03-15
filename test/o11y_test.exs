@@ -224,7 +224,10 @@ defmodule O11yTest do
 
   describe "distributed_trace_ctx" do
     test "can attach trace context from disconnected remote trace" do
-      ctx = Tracer.with_span("caller", do: O11y.get_distributed_trace_ctx())
+      ctx =
+        Tracer.with_span "caller" do
+          O11y.get_distributed_trace_ctx()
+        end
 
       O11y.attach_distributed_trace_ctx(ctx)
       Tracer.with_span("callee", do: :ok)
