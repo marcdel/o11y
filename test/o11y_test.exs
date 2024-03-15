@@ -168,7 +168,9 @@ defmodule O11yTest do
         O11y.record_exception(%RuntimeError{message: "something went wrong"})
       end
 
-      assert_span("checkout", status: {:error, "something went wrong"})
+      span = assert_span("checkout")
+      assert span.status.code == :error
+      assert span.status.message == "something went wrong"
     end
 
     test "adds an exception event to the span" do
@@ -176,9 +178,11 @@ defmodule O11yTest do
         O11y.record_exception(%RuntimeError{message: "something went wrong"})
       end
 
-      span(events: events) = assert_span("checkout")
-      assert [event(name: "exception", attributes: attributes)] = events(events)
-      assert %{"exception.message": "something went wrong"} = attributes(attributes)
+      span = assert_span("checkout")
+
+      assert [event] = span.events
+      assert event.name == "exception"
+      assert %{"exception.message": "something went wrong"} = event.attributes
     end
   end
 
@@ -188,7 +192,9 @@ defmodule O11yTest do
         O11y.set_error()
       end
 
-      assert_span("checkout", status: :error)
+      span = assert_span("checkout")
+      assert span.status.code == :error
+      assert span.status.message == ""
     end
 
     test "sets a message if given one" do
@@ -196,7 +202,9 @@ defmodule O11yTest do
         O11y.set_error("something went wrong")
       end
 
-      assert_span("checkout", status: {:error, "something went wrong"})
+      span = assert_span("checkout")
+      assert span.status.code == :error
+      assert span.status.message == "something went wrong"
     end
 
     test "sets a message to the exception message if given an exception" do
@@ -204,7 +212,9 @@ defmodule O11yTest do
         O11y.set_error(%RuntimeError{message: "something went wrong"})
       end
 
-      assert_span("checkout", status: {:error, "something went wrong"})
+      span = assert_span("checkout")
+      assert span.status.code == :error
+      assert span.status.message == "something went wrong"
     end
 
     test "does not set a message if given something other than a binary" do
@@ -215,7 +225,8 @@ defmodule O11yTest do
           end
         end)
 
-      assert_span("checkout", status: :error)
+      span = assert_span("checkout")
+      assert span.status.code == :error
 
       assert log =~
                "Tracer.set_status only accepts a binary error message. The given value was: 123"
@@ -232,10 +243,9 @@ defmodule O11yTest do
       O11y.attach_distributed_trace_ctx(ctx)
       Tracer.with_span("callee", do: :ok)
 
-      span = assert_span("caller")
-      span(trace_id: trace_id) = span
-
-      assert_span("callee", trace_id: trace_id)
+      caller_span = assert_span("caller")
+      callee_span = assert_span("callee")
+      assert caller_span.trace_id == callee_span.trace_id
     end
 
     test "attach can take just the traceparent binary" do
@@ -244,10 +254,9 @@ defmodule O11yTest do
       O11y.attach_distributed_trace_ctx(ctx)
       Tracer.with_span("callee", do: :ok)
 
-      span = assert_span("caller")
-      span(trace_id: trace_id) = span
-
-      assert_span("callee", trace_id: trace_id)
+      caller_span = assert_span("caller")
+      callee_span = assert_span("callee")
+      assert caller_span.trace_id == callee_span.trace_id
     end
   end
 end

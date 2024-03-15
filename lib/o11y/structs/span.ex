@@ -1,36 +1,17 @@
 defmodule O11y.Span do
   @moduledoc """
-  Struct version of the erlang record definition for span
+  Struct version of the erlang record definition for span, along with its dependent entities.
 
-  https://github.com/open-telemetry/opentelemetry-erlang/blob/main/apps/opentelemetry/include/otel_span.hrl
-
-  ```elixir
-  iex> span_record = {
-    :span,
-    230_767_895_094_221_212_207_434_514_454_409_384_028,
-    11_664_055_003_178_746_420,
-    [],
-    :undefined,
-    "login",
-    :internal,
-    -576_460_751_415_352_875,
-    -576_460_751_415_250_041,
-    {:attributes, 128, :infinity, 0,
-     %{
-       "email" => "user@email.com",
-       "id" => 123,
-       "name" => "Alice",
-       "password" => "password"
-     }},
-    {:events, 128, 128, :infinity, 0, []},
-    {:links, 128, 128, :infinity, 0, []},
-    :undefined,
-    1,
-    false,
-    :undefined
-  }
-  ```
+  The record is defined here:
+  https://github.com/open-telemetry/opentelemetry-erlang/blob/main/apps/opentelemetry/include/otel_span.hrl#L19
   """
+
+  alias O11y.Attributes
+  alias O11y.Event
+  alias O11y.Events
+  alias O11y.Link
+  alias O11y.Links
+  alias O11y.Status
 
   defstruct [
     :trace_id,
@@ -51,13 +32,120 @@ defmodule O11y.Span do
     :instrumentation_scope
   ]
 
-  alias O11y.Attributes
-  alias O11y.Events
-  alias O11y.Links
-  alias O11y.Status
+  @type t() :: %__MODULE__{
+          trace_id: integer() | :undefined,
+          span_id: integer() | :undefined,
+          tracestate: list(tuple()),
+          parent_span_id: integer() | :undefined,
+          name: String.t() | atom(),
+          kind: atom(),
+          start_time: integer() | :undefined,
+          end_time: integer() | :undefined,
+          duration_ms: integer() | :undefined,
+          attributes: Attributes.t() | :undefined,
+          events: [Event.t()],
+          links: [Link.t()],
+          status: Status.t() | :undefined,
+          trace_flags: integer() | :undefined,
+          is_recording: boolean() | :undefined,
+          instrumentation_scope: term() | :undefined
+        }
 
+  @type span_kind() :: :internal | :server | :client | :producer | :consumer
+
+  @type span_record() :: {
+          :span,
+          trace_id :: integer() | :undefined,
+          span_id :: integer() | :undefined,
+          tracestate :: list(tuple()),
+          parent_span_id :: integer() | :undefined,
+          name :: String.t() | atom(),
+          kind :: span_kind() | :undefined,
+          start_time :: integer() | :undefined,
+          end_time :: integer() | :undefined,
+          attributes :: Attributes.attributes_record(),
+          events :: Events.events_record(),
+          links :: Links.links_record(),
+          status :: Status.status_record(),
+          trace_flags :: integer() | :undefined,
+          is_recording :: boolean() | :undefined,
+          instrumentation_scope :: term() | :undefined
+        }
+
+  @doc """
+  Guard definition for the from_record function.
+  """
   defguard is_span_record(value) when is_tuple(value) and tuple_size(value) == 16
 
+  @doc """
+  Builds a Span struct with all its properties filled out from the given record.
+
+  ## Examples:
+
+  ```elixir
+  iex> span_record =
+  iex> {
+  ...>   :span,
+  ...>   36028033703494123531935328165008164641,
+  ...>   3003871636294788166,
+  ...>   [],
+  ...>   9251127051694223323,
+  ...>   "span3",
+  ...>   :internal,
+  ...>   -576460751554471834,
+  ...>   -576460751554453625,
+  ...>   {:attributes, 128, :infinity, 0, %{attr2: "value2"}},
+  ...>   {:events, 128, 128, :infinity, 0,
+  ...>     [
+  ...>       {:event, -576460751554458125, "event1",
+  ...>       {:attributes, 128, :infinity, 0, %{attr3: "value3"}}}
+  ...>     ]},
+  ...>   {:links, 128, 128, :infinity, 0,
+  ...>     [
+  ...>       {:link, 15885629928321603655903684450721700386,
+  ...>       4778191783967788040,
+  ...>       {:attributes, 128, :infinity, 0, %{link_attr1: "link_value1"}}, []}
+  ...>     ]},
+  ...>   {:status, :error, "whoops!"},
+  ...>   1,
+  ...>   true,
+  ...>   :undefined
+  ...> }
+  iex> Span.from_record(span_record)
+  iex> %O11y.Span{
+  ...>   trace_id: 36028033703494123531935328165008164641,
+  ...>   span_id: 3003871636294788166,
+  ...>   tracestate: [],
+  ...>   parent_span_id: 9251127051694223323,
+  ...>   name: "span3",
+  ...>   kind: :internal,
+  ...>   start_time: -576460751554471834,
+  ...>   end_time: -576460751554453625,
+  ...>   duration_ms: 0,
+  ...>   attributes: %{attr2: "value2"},
+  ...>   events: [
+  ...>     %O11y.Event{
+  ...>       name: "event1",
+  ...>       native_time: -576460751554458125,
+  ...>       attributes: %{attr3: "value3"}
+  ...>     }
+  ...>   ],
+  ...>   links: [
+  ...>     %O11y.Link{
+  ...>       trace_id: 15885629928321603655903684450721700386,
+  ...>       span_id: 4778191783967788040,
+  ...>       attributes: %{link_attr1: "link_value1"},
+  ...>       tracestate: []
+  ...>     }
+  ...>   ],
+  ...>   status: %O11y.Status{code: :error, message: "whoops!"},
+  ...>   trace_flags: 1,
+  ...>   is_recording: true,
+  ...>   instrumentation_scope: :undefined
+  ...> }
+  ```
+  """
+  @spec from_record(span_record()) :: t()
   def from_record(span_record) when is_span_record(span_record) do
     {
       :span,

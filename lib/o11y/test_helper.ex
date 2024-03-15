@@ -2,7 +2,7 @@ defmodule O11y.TestHelper do
   @moduledoc """
   Provides a few helper functions to make testing with OpenTelemetry easier.
 
-  Example:
+  ## Examples:
 
   ```elixir
   defmodule MyTest do
@@ -57,26 +57,6 @@ defmodule O11y.TestHelper do
   """
   @callback assert_span(String.t(), Keyword.t()) :: span_record()
 
-  @doc """
-  Extracts the status atom from the status field on a span record.
-  """
-  @callback status(tuple()) :: atom()
-
-  @doc """
-  Extracts the links from a span record. Individual link records can be further inspected with the `link` function.
-  """
-  @callback links(tuple()) :: list()
-
-  @doc """
-  Extracts the events from a span record. Individual event records can be further inspected with the `event` function.
-  """
-  @callback events(tuple()) :: list()
-
-  @doc """
-  Extracts the attributes from a span record as a map.
-  """
-  @callback attributes(tuple()) :: map()
-
   defmacro __using__(_) do
     quote do
       @behaviour O11y.TestHelper
@@ -105,32 +85,8 @@ defmodule O11y.TestHelper do
       end
 
       def assert_span(name, opts \\ []) do
-        assert_receive {:span,
-                        span(
-                          name: ^name,
-                          trace_id: trace_id,
-                          status: status,
-                          attributes: attrs,
-                          events: _events
-                        ) = span}
-
-        if Keyword.has_key?(opts, :trace_id) do
-          expected_trace_id = opts[:trace_id]
-          assert trace_id == expected_trace_id
-        end
-
-        if Keyword.has_key?(opts, :status) do
-          expected_status = opts[:status]
-          assert status(status) == expected_status
-        end
-
-        if Keyword.has_key?(opts, :attributes) do
-          span_attributes = attributes(attrs)
-          expected_attributes = opts[:attributes]
-          assert span_attributes == expected_attributes
-        end
-
-        span
+        assert_receive {:span, span(name: ^name) = span}
+        O11y.Span.from_record(span)
       end
     end
   end

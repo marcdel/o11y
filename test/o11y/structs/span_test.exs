@@ -4,6 +4,14 @@ defmodule O11y.SpanTest do
 
   alias O11y.Span
 
+  doctest O11y.Attributes
+  doctest O11y.Event
+  doctest O11y.Events
+  doctest O11y.Link
+  doctest O11y.Links
+  doctest O11y.Span
+  doctest O11y.Status
+
   describe "from_record/1" do
     test "can create a struct from a record" do
       span_record = span(name: "hello")
@@ -40,19 +48,33 @@ defmodule O11y.SpanTest do
 
     test "more thorough example" do
       span_record =
-        {:span, 36_028_033_703_494_123_531_935_328_165_008_164_641, 3_003_871_636_294_788_166, [],
-         9_251_127_051_694_223_323, "span3", :internal, -576_460_751_554_471_834,
-         -576_460_751_554_453_625, {:attributes, 128, :infinity, 0, %{attr2: "value2"}},
-         {:events, 128, 128, :infinity, 0,
-          [
-            {:event, -576_460_751_554_458_125, "event1",
-             {:attributes, 128, :infinity, 0, %{attr3: "value3"}}}
-          ]},
-         {:links, 128, 128, :infinity, 0,
-          [
-            {:link, 15_885_629_928_321_603_655_903_684_450_721_700_386, 4_778_191_783_967_788_040,
-             {:attributes, 128, :infinity, 0, %{link_attr1: "link_value1"}}, []}
-          ]}, {:status, :error, "whoops!"}, 1, true, :undefined}
+        {
+          :span,
+          36_028_033_703_494_123_531_935_328_165_008_164_641,
+          3_003_871_636_294_788_166,
+          [],
+          9_251_127_051_694_223_323,
+          "span3",
+          :internal,
+          -576_460_751_554_471_834,
+          -576_460_751_554_453_625,
+          {:attributes, 128, :infinity, 0, %{attr2: "value2"}},
+          {:events, 128, 128, :infinity, 0,
+           [
+             {:event, -576_460_751_554_458_125, "event1",
+              {:attributes, 128, :infinity, 0, %{attr3: "value3"}}}
+           ]},
+          {:links, 128, 128, :infinity, 0,
+           [
+             {:link, 15_885_629_928_321_603_655_903_684_450_721_700_386,
+              4_778_191_783_967_788_040,
+              {:attributes, 128, :infinity, 0, %{link_attr1: "link_value1"}}, []}
+           ]},
+          {:status, :error, "whoops!"},
+          1,
+          true,
+          :undefined
+        }
 
       span = Span.from_record(span_record)
 
