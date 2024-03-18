@@ -48,9 +48,9 @@ defmodule O11y.MixProject do
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2", only: :dev, runtime: false},
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
-      {:opentelemetry_exporter, "~> 1.4", only: :test},
-      {:opentelemetry_api, "~> 1.2"},
-      {:opentelemetry, "~> 1.3", only: :test, runtime: false}
+      {:opentelemetry_exporter, "~> 1.7", only: :test},
+      {:opentelemetry_api, "~> 1.3"},
+      {:opentelemetry, "~> 1.4", only: :test, runtime: false}
     ]
   end
 
