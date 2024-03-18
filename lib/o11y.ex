@@ -153,7 +153,7 @@ defmodule O11y do
   """
   def record_exception(exception) when is_exception(exception) do
     Tracer.record_exception(exception)
-    set_error(exception.message)
+    set_error(Exception.message(exception))
 
     exception
   end
