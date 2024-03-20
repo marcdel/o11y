@@ -168,11 +168,21 @@ defmodule O11y do
   @doc """
   Sets the status of the current span to error, and sets an error message.
 
-  Example:
+  # Examples:
 
   ```elixir
   iex> O11y.set_error("something went wrong")
   "something went wrong"
+  ```
+
+  ```elixir
+  iex> O11y.set_error(%RuntimeError{message: "something went wrong"})
+  %RuntimeError{message: "something went wrong"}
+  ```
+
+  ```elixir
+  iex> O11y.set_error(%Jason.DecodeError{position: 0, token: nil, data: ""})
+  %Jason.DecodeError{position: 0, token: nil, data: ""}
   ```
   """
   def set_error(message) when is_binary(message) do
@@ -181,11 +191,7 @@ defmodule O11y do
   end
 
   def set_error(exception) when is_exception(exception) do
-    Logger.info(
-      "This does not add an exception event to the span. You might want `O11y.record_exception/1` instead."
-    )
-
-    Tracer.set_status(:error, exception.message)
+    Tracer.set_status(:error, Exception.message(exception))
     exception
   end
 

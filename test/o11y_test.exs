@@ -208,18 +208,33 @@ defmodule O11yTest do
     end
 
     test "sets a message to the exception message if given an exception" do
-      Tracer.with_span "checkout" do
+      Tracer.with_span "runtime error" do
         O11y.set_error(%RuntimeError{message: "something went wrong"})
       end
 
-      span = assert_span("checkout")
+      span = assert_span("runtime error")
       assert span.status.code == :error
       assert span.status.message == "something went wrong"
     end
 
+    defmodule Jason.DecodeError do
+      defexception [:position, :token, :data]
+      def message(_), do: "fancy error!"
+    end
+
+    test "handles exceptions with derived messages" do
+      Tracer.with_span "jason error" do
+        O11y.set_error(%Jason.DecodeError{position: 0, token: "asdasd", data: ""})
+      end
+
+      span = assert_span("jason error")
+      assert span.status.code == :error
+      assert span.status.message == "fancy error!"
+    end
+
     test "does not set a message if given something other than a binary" do
-      {_, log} =
-        with_log(fn ->
+      log =
+        capture_log(fn ->
           Tracer.with_span "checkout" do
             O11y.set_error(123)
           end
@@ -227,6 +242,7 @@ defmodule O11yTest do
 
       span = assert_span("checkout")
       assert span.status.code == :error
+      assert span.status.message == ""
 
       assert log =~
                "Tracer.set_status only accepts a binary error message. The given value was: 123"
