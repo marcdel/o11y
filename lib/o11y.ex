@@ -153,7 +153,7 @@ defmodule O11y do
   """
   def record_exception(exception) when is_exception(exception) do
     Tracer.record_exception(exception)
-    set_error(Exception.message(exception))
+    set_error(exception)
 
     exception
   end
@@ -196,13 +196,10 @@ defmodule O11y do
   end
 
   def set_error(message) do
-    # This would result in error: false, status_code: 0, and a missing status_message
-    # We fall back to just setting the status and omitting the error message
-    Logger.warning(
-      "Tracer.set_status only accepts a binary error message. The given value was: #{inspect(message)}"
-    )
+    # This would result in error: false, status_code: 0, and status_message: ""
+    # We fall back to inspecting the value to set as the error message.
+    Tracer.set_status(:error, inspect(message))
 
-    set_error()
     message
   end
 

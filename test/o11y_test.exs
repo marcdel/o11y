@@ -2,8 +2,6 @@ defmodule O11yTest do
   use ExUnit.Case, async: true
   use O11y.TestHelper
 
-  import ExUnit.CaptureLog
-
   doctest O11y
 
   defmodule Regular do
@@ -232,20 +230,14 @@ defmodule O11yTest do
       assert span.status.message == "fancy error!"
     end
 
-    test "does not set a message if given something other than a binary" do
-      log =
-        capture_log(fn ->
-          Tracer.with_span "checkout" do
-            O11y.set_error(123)
-          end
-        end)
+    test "inspects the value if given something other than a binary" do
+      Tracer.with_span "checkout" do
+        O11y.set_error([1, 2, 3])
+      end
 
       span = assert_span("checkout")
       assert span.status.code == :error
-      assert span.status.message == ""
-
-      assert log =~
-               "Tracer.set_status only accepts a binary error message. The given value was: 123"
+      assert span.status.message == "[1, 2, 3]"
     end
   end
 
