@@ -1,5 +1,9 @@
 # O11y
 
+## v0.1.4
+
+- We now handle exceptions that do not define a `message` attribute on the struct e.g. `Jason.DecodeError` when calling `O11y.set_error`.
+
 ## v0.1.3
 
 - We now log an error and do not attempt to set the error message if the message is not a string. Calling `Tracer.set_status` with anything else causes the span's status not to be updated correctly, and the error message to be lost anyway.
