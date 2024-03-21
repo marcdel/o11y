@@ -42,11 +42,13 @@ defprotocol O11y.SpanAttributes do
   ```
   """
 
+  @type otlp_value() :: String.t() | integer() | float() | boolean()
+
   @doc """
   Returns the opentelemetry span attributes for the given object as a list of tuples.
   """
   @fallback_to_any true
-  @spec get(any()) :: OpenTelemetry.attributes_map()
+  @spec get(any()) :: OpenTelemetry.attributes_map() | otlp_value()
   def get(thing)
 end
 

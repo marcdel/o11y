@@ -3,8 +3,10 @@ defmodule O11y do
   A module to help with OpenTelemetry tracing.
   """
 
-  require OpenTelemetry.Tracer, as: Tracer
   require Logger
+  require OpenTelemetry.Tracer, as: Tracer
+
+  import O11y.AttributeName
 
   @doc """
   Starts a new span and makes it the current active span of the current process.
@@ -70,6 +72,7 @@ defmodule O11y do
   """
   def set_attribute(key, value) do
     value = O11y.SpanAttributes.get(value)
+    key = trim_leading(key)
     Tracer.set_attribute(key, value)
     :ok
   end
@@ -94,6 +97,7 @@ defmodule O11y do
   def set_attributes(values) do
     values
     |> O11y.SpanAttributes.get()
+    |> Enum.map(fn {key, value} -> {trim_leading(key), value} end)
     |> Tracer.set_attributes()
 
     values
@@ -117,7 +121,8 @@ defmodule O11y do
   def set_attributes(prefix, values) do
     values
     |> O11y.SpanAttributes.get()
-    |> Enum.map(fn {key, value} -> {"#{prefix}.#{key}", value} end)
+    |> Enum.map(fn {key, value} -> {trim_leading(key), value} end)
+    |> Enum.map(fn {key, value} -> {"#{trim_leading(prefix)}.#{key}", value} end)
     |> Tracer.set_attributes()
 
     values
@@ -196,10 +201,7 @@ defmodule O11y do
   end
 
   def set_error(message) do
-    # This would result in error: false, status_code: 0, and status_message: ""
-    # We fall back to inspecting the value to set as the error message.
     Tracer.set_status(:error, inspect(message))
-
     message
   end
 

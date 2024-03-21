@@ -104,7 +104,18 @@ defmodule O11yTest do
         O11y.set_attribute(:user, %Regular{id: 123, name: "Alice"})
       end
 
-      assert_span("login", attributes: %{})
+      span = assert_span("login")
+      assert span.attributes == %{}
+    end
+
+    test "trims leading underscores" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:_unused_var, 123)
+        O11y.set_attribute("_more_unused", "abc")
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"unused_var" => 123, "more_unused" => "abc"}
     end
   end
 
@@ -157,6 +168,22 @@ defmodule O11yTest do
       end
 
       assert_span("login", attributes: %{"user.id" => 123, "user.name" => "Alice"})
+    end
+
+    test "trims leading underscores" do
+      Tracer.with_span "login" do
+        O11y.set_attributes(:_user, %{id: 123, _name: "Alice"})
+        O11y.set_attributes(%{id: 123, _name: "Alice"})
+      end
+
+      span = assert_span("login")
+
+      assert span.attributes == %{
+               "name" => "Alice",
+               "user.id" => 123,
+               "user.name" => "Alice",
+               "id" => 123
+             }
     end
   end
 
