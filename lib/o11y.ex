@@ -6,7 +6,11 @@ defmodule O11y do
   require Logger
   require OpenTelemetry.Tracer, as: Tracer
 
-  import O11y.AttributeName
+  import O11y.AttributeProcessor
+
+  alias O11y.SpanAttributes
+
+  @attribute_namespace Application.compile_env(:o11y, :attribute_namespace)
 
   @doc """
   Starts a new span and makes it the current active span of the current process.
@@ -16,7 +20,7 @@ defmodule O11y do
   The API `end_span` function doesn't take a span to end anyway (though it seems like it should)
   so you sort of use this as I would expect the actual API to work and get similar behavior to `with_span`
 
-  Example:
+  ## Examples:
 
   ```elixir
   iex> Tracer.with_span "checkout" do
@@ -26,7 +30,7 @@ defmodule O11y do
   iex> end
   ```
   """
-  @spec start_span(String.t(), Keyword.t()) :: OpenTelemetry.span_ctx()
+  @spec start_span(String.t(), Keyword.t()) :: OpenTelemetry.span_ctx() | :undefined
   def start_span(name, opts \\ []) do
     parent_span = Tracer.current_span_ctx()
     span = Tracer.start_span(name, opts)
@@ -38,14 +42,14 @@ defmodule O11y do
   @doc """
   Ends the current span and marks the given parent span as current.
 
-  Example:
+  ## Examples:
 
   ```elixir
   iex> span = O11y.start_span("checkout")
   iex> O11y.end_span(span)
   ```
   """
-  @spec end_span(OpenTelemetry.span_ctx()) :: OpenTelemetry.span_ctx()
+  @spec end_span(OpenTelemetry.span_ctx() | :undefined) :: OpenTelemetry.span_ctx() | :undefined
   def end_span(parent_span) do
     Tracer.end_span()
     Tracer.set_current_span(parent_span)
@@ -58,21 +62,38 @@ defmodule O11y do
   This method does not support structs to maps, regardless of whether the struct implements the O11y.SpanAttributes protocol.
   You need to use `set_attributes/1` for that.
 
-  Example:
+  ## Examples:
 
   ```elixir
   iex> O11y.set_attribute("key", "value")
   :ok
-  ```
 
-  Produces span attributes like:
-  ```elixir
+  # Produces span attributes like:
   {:attributes, 128, :infinity, 0, %{key: "value"}}
   ```
+
+  ```elixir
+  iex> O11y.set_attribute("key", "value", namespace: "cool_app")
+  :ok
+
+  # Produces span attributes like:
+  {:attributes, 128, :infinity, 0, %{"cool_app.key" => "value"}}
+  ```
+
+  Namespace can also be set globally via configuration like:
+  ```elixir
+  config :open_telemetry_decorator, :attribute_namespace, "app"
+  ```
   """
-  def set_attribute(key, value) do
-    value = O11y.SpanAttributes.get(value)
-    key = trim_leading(key)
+  def set_attribute(key, value, opts \\ []) do
+    namespace = Keyword.get(opts, :namespace) || @attribute_namespace
+
+    key =
+      key
+      |> trim_leading()
+      |> prefix(namespace)
+
+    value = SpanAttributes.get(value)
     Tracer.set_attribute(key, value)
     :ok
   end
@@ -82,47 +103,44 @@ defmodule O11y do
   If the value is a maps or struct, it will be converted to a list of key-value pairs.
   If the struct derives the O11y.SpanAttributes protocol, it will honor the except and only options.
 
-  Example:
+  ## Examples:
 
   ```elixir
   iex> O11y.set_attributes(%{id: 123, name: "Alice"})
   %{id: 123, name: "Alice"}
-  ```
 
-  Produces span attributes like:
-  ```elixir
+  # Produces span attributes like:
   {:attributes, 128, :infinity, 0, %{id: 123, name: "Alice"}}
   ```
-  """
-  def set_attributes(values) do
-    values
-    |> O11y.SpanAttributes.get()
-    |> Enum.map(fn {key, value} -> {trim_leading(key), value} end)
-    |> Tracer.set_attributes()
-
-    values
-  end
-
-  @doc """
-  Same as set_attributes/1, but with a prefix for all keys.
-
-  Example:
 
   ```elixir
-  iex> O11y.set_attributes("user", %{name: "Steve", age: 47})
+  iex> O11y.set_attributes(%{name: "Steve", age: 47}, prefix: "user")
   %{name: "Steve", age: 47}
-  ```
 
-  Produces span attributes like:
-  ```elixir
+  # Produces span attributes like:
   {:attributes, 128, :infinity, 0, %{"user.age" => 47, "user.name" => "Steve"}}
   ```
+
+  ```elixir
+  iex> O11y.set_attributes(%{name: "Steve", age: 47}, namespace: "app")
+  %{name: "Steve", age: 47}
+
+  # Produces span attributes like:
+  {:attributes, 128, :infinity, 0, %{"app.age" => 47, "app.name" => "Steve"}}
+  ```
+
+  Namespace can also be set globally via configuration like:
+  ```elixir
+  config :open_telemetry_decorator, :attribute_namespace, "app"
+  ```
   """
-  def set_attributes(prefix, values) do
+  def set_attributes(values, opts \\ []) do
+    namespace = Keyword.get(opts, :namespace) || @attribute_namespace
+    obj_prefix = Keyword.get(opts, :prefix)
+
     values
-    |> O11y.SpanAttributes.get()
-    |> Enum.map(fn {key, value} -> {trim_leading(key), value} end)
-    |> Enum.map(fn {key, value} -> {"#{trim_leading(prefix)}.#{key}", value} end)
+    |> SpanAttributes.get()
+    |> Enum.map(fn {key, value} -> {key |> prefix(obj_prefix) |> prefix(namespace), value} end)
     |> Tracer.set_attributes()
 
     values
@@ -131,7 +149,7 @@ defmodule O11y do
   @doc """
   Records an exception and sets the status of the current span to error.
 
-  Example:
+  ## Examples:
 
   ```elixir
   iex> O11y.record_exception(%RuntimeError{message: "something went wrong"})
@@ -210,7 +228,7 @@ defmodule O11y do
   the trace can be continued in another service. However, it can also be used to link span in cases where
   OpenTelemetry.Ctx.attach/1 will not work (such as when the parent span has already ended or been removed from the dictionary).
 
-  Example:
+  ## Examples:
   ```elixir
   iex> res = Tracer.with_span "some_span", do: O11y.get_distributed_trace_ctx()
   iex> [{"traceparent", _}] = res
@@ -222,7 +240,7 @@ defmodule O11y do
   This is the counterpart to `get_distributed_trace_ctx/0`. It is used to "extract" trace context information from http headers.
   This context information is stored in a string so it can be passed around by other means as well.
 
-  Example:
+  ## Examples:
   ```elixir
   iex> O11y.attach_distributed_trace_ctx([traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"])
   iex> O11y.attach_distributed_trace_ctx("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")

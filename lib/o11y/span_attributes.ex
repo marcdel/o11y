@@ -73,8 +73,7 @@ defimpl O11y.SpanAttributes, for: Any do
     end
   end
 
-  defguard is_otlp_value(value)
-           when is_binary(value) or is_integer(value) or is_boolean(value) or is_float(value)
+  import O11y.Attributes, only: [is_otlp_value: 1]
 
   def get(thing) when is_otlp_value(thing), do: thing
   def get(%_{} = thing) when is_struct(thing), do: thing |> Map.from_struct() |> get()

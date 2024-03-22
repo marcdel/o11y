@@ -117,6 +117,26 @@ defmodule O11yTest do
       span = assert_span("login")
       assert span.attributes == %{"unused_var" => 123, "more_unused" => "abc"}
     end
+
+    test "namespaces attributes with the given value" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:id, 123, namespace: :user)
+        O11y.set_attribute(:type, :admin, namespace: "app")
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"user.id" => 123, "app.type" => ":admin"}
+    end
+
+    test "avoids doubling up existing prefixes" do
+      Tracer.with_span "login" do
+        O11y.set_attribute("app.id", 123, namespace: "app")
+        O11y.set_attribute("app_id", 456, namespace: "app")
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"app.id" => 123, "app.app_id" => 456}
+    end
   end
 
   describe "set_attributes" do
@@ -162,9 +182,9 @@ defmodule O11yTest do
       assert_span("login", attributes: %{"id" => 123, "name" => "Alice"})
     end
 
-    test "appends struct attributes prepended with the given key" do
+    test "adds struct attributes prepended with the given prefix" do
       Tracer.with_span "login" do
-        O11y.set_attributes(:user, %User{id: 123, name: "Alice"})
+        O11y.set_attributes(%User{id: 123, name: "Alice"}, prefix: :user)
       end
 
       assert_span("login", attributes: %{"user.id" => 123, "user.name" => "Alice"})
@@ -172,17 +192,32 @@ defmodule O11yTest do
 
     test "trims leading underscores" do
       Tracer.with_span "login" do
-        O11y.set_attributes(:_user, %{id: 123, _name: "Alice"})
+        O11y.set_attributes(%{id: 123, _name: "Alice"}, prefix: :_user)
         O11y.set_attributes(%{id: 123, _name: "Alice"})
       end
 
       span = assert_span("login")
 
       assert span.attributes == %{
-               "name" => "Alice",
                "user.id" => 123,
                "user.name" => "Alice",
-               "id" => 123
+               "id" => 123,
+               "name" => "Alice"
+             }
+    end
+
+    test "namespaces attributes with the given value" do
+      Tracer.with_span "login" do
+        O11y.set_attributes(%User{id: 123, name: "Alice"}, prefix: :user, namespace: :slack)
+        O11y.set_attributes(%{type: "crud"}, namespace: "app")
+      end
+
+      span = assert_span("login")
+
+      assert span.attributes == %{
+               "slack.user.id" => 123,
+               "slack.user.name" => "Alice",
+               "app.type" => "crud"
              }
     end
   end

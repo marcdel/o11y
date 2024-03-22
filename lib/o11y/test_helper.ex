@@ -37,7 +37,7 @@ defmodule O11y.TestHelper do
   @doc """
   Asserts that a span with the given name was exported and optionally checks the status and attributes.
 
-  Example:
+  ## Examples:
   ```elixir
   assert_span("checkout", attributes: %{"id" => 123})
   assert_span("checkout", status: :error)
