@@ -1,5 +1,25 @@
 # O11y
 
+## v0.2.0
+
+- ⚠️ Breaking Change ⚠️: The `O11y.set_attributes/2` function has changed. The first argument, `prefix` has moved into an options keyword list in order to accomodate the `namespace` option as well.
+
+Before:
+```elixir
+O11y.set_attributes("my_prefix", %{key: "value"})
+```
+
+After:
+```elixir
+O11y.set_attributes(%{key: "value"}, prefix: "my_prefix")
+```
+
+- Attribute names that begin with an underscore now have the underscore removed before being added to the span. This allows you to add variables that are otherwise unused but have them be named normally in the span.
+
+- Adds the ability to define a namespace to be prepended to attributes globally or on a per-attribute basis. This reduces the risk of attribute name collisions and helpfully keeps all of your custom attributes together in trace front ends.
+
+- ⚠️ish change: Changes the behavior of `O11y.set_error/2` when given something other than a string or an exception struct. Previously it would log a warning and not set the error message. Now it will set the error message to the string representation of the given value.
+
 ## v0.1.4
 
 - We now handle exceptions that do not define a `message` attribute on the struct e.g. `Jason.DecodeError` when calling `O11y.set_error`.

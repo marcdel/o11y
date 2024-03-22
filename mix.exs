@@ -1,7 +1,7 @@
 defmodule O11y.MixProject do
   use Mix.Project
 
-  @version "0.1.4"
+  @version "0.2.0"
   @github_page "https://github.com/marcdel/o11y"
 
   def project do
@@ -11,7 +11,7 @@ defmodule O11y.MixProject do
       name: "O11y",
       description: "Generalizable utilities for working with OpenTelemetry in Elixir.",
       homepage_url: @github_page,
-      elixir: "~> 1.14",
+      elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       consolidate_protocols: Mix.env() == :prod,
