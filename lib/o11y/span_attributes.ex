@@ -76,7 +76,19 @@ defimpl O11y.SpanAttributes, for: Any do
   import O11y.Attributes, only: [is_otlp_value: 1]
 
   def get(thing) when is_otlp_value(thing), do: thing
+
+  # Structs that do not derive the protocol end up here and are turned into maps (which implement Enumerable)
   def get(%_{} = thing) when is_struct(thing), do: thing |> Map.from_struct() |> get()
+
   def get(thing) when is_map(thing), do: Enum.map(thing, fn {k, v} -> {to_string(k), v} end)
+
+  def get(thing) when is_list(thing) do
+    if Keyword.keyword?(thing) do
+      Enum.map(thing, fn {k, v} -> {to_string(k), v} end)
+    else
+      inspect(thing)
+    end
+  end
+
   def get(thing), do: inspect(thing)
 end

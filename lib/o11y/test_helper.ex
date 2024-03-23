@@ -85,8 +85,8 @@ defmodule O11y.TestHelper do
       end
 
       def assert_span(name, opts \\ []) do
-        assert_receive {:span, span(name: ^name) = span}
-        O11y.Span.from_record(span)
+        assert_receive {:span, span(name: ^name) = span_record}
+        O11y.Span.from_record(span_record)
       end
     end
   end

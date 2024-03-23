@@ -21,6 +21,10 @@ defmodule O11y.SpanAttributesTest do
       assert SpanAttributes.get(%Regular{id: 1, name: "basic"}) == [{"id", 1}, {"name", "basic"}]
     end
 
+    test "keyword lists are returned with string keys" do
+      assert SpanAttributes.get([{:id, 1}, {:name, "boop"}]) == [{"id", 1}, {"name", "boop"}]
+    end
+
     test "inspect()s anything else" do
       assert SpanAttributes.get({:error, "too sick bro"}) == "{:error, \"too sick bro\"}"
       assert SpanAttributes.get(:pink) == ":pink"

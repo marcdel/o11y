@@ -25,7 +25,8 @@ defmodule O11yTest do
       O11y.start_span("checkout", attributes: %{id: 123, name: "Alice"})
       Tracer.end_span()
 
-      assert_span("checkout", attributes: %{id: 123, name: "Alice"})
+      span = assert_span("checkout")
+      assert span.attributes == %{id: 123, name: "Alice"}
     end
 
     test "sets the new span as current" do
@@ -87,14 +88,10 @@ defmodule O11yTest do
         O11y.set_attribute(:type, :admin)
       end
 
-      expected = %{
-        id: 123,
-        enabled?: true,
-        balance: 24.75,
-        type: ":admin"
-      }
+      expected = %{"balance" => 24.75, "enabled?" => true, "id" => 123, "type" => ":admin"}
 
-      assert_span("checkout", attributes: expected)
+      span = assert_span("checkout")
+      assert span.attributes == expected
     end
 
     test "can't handle structs or maps" do
@@ -102,6 +99,24 @@ defmodule O11yTest do
         O11y.set_attribute(:record, %{id: 1})
         O11y.set_attribute(:user, %User{id: 123, name: "Alice"})
         O11y.set_attribute(:user, %Regular{id: 123, name: "Alice"})
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{}
+    end
+
+    test "returns nil values even though they're ignored" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:id, nil)
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"id" => "nil"}
+    end
+
+    test "nil attribute names are ignored" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(nil, 123)
       end
 
       span = assert_span("login")
@@ -154,7 +169,8 @@ defmodule O11yTest do
           "password" => "password"
         }
 
-      assert_span("login", attributes: expected)
+      span = assert_span("login")
+      assert span.attributes == expected
     end
 
     test "non-derived structs have all their keys added" do
@@ -171,7 +187,8 @@ defmodule O11yTest do
           "password" => "password"
         }
 
-      assert_span("login", attributes: expected)
+      span = assert_span("login")
+      assert span.attributes == expected
     end
 
     test "adds struct attributes to the span" do
@@ -179,7 +196,35 @@ defmodule O11yTest do
         O11y.set_attributes(%User{id: 123, name: "Alice"})
       end
 
-      assert_span("login", attributes: %{"id" => 123, "name" => "Alice"})
+      span = assert_span("login")
+      assert span.attributes == %{"id" => 123, "name" => "Alice"}
+    end
+
+    test "keyword lists have all their keys added" do
+      Tracer.with_span "login" do
+        user = [id: 123, name: "Alice", email: "alice@email.com"]
+        O11y.set_attributes(user)
+      end
+
+      expected = %{"email" => "alice@email.com", "id" => 123, "name" => "Alice"}
+
+      span = assert_span("login")
+      assert span.attributes == expected
+    end
+
+    test "ignores values that do not have something that can be used as the key" do
+      Tracer.with_span "login" do
+        O11y.set_attributes([1, 2, 3])
+        O11y.set_attributes({:error, "too sick bro"})
+        O11y.set_attributes(:pink)
+        O11y.set_attributes("boop")
+        O11y.set_attributes(12)
+        O11y.set_attributes(1.2)
+        O11y.set_attributes(true)
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{}
     end
 
     test "adds struct attributes prepended with the given prefix" do
@@ -187,7 +232,8 @@ defmodule O11yTest do
         O11y.set_attributes(%User{id: 123, name: "Alice"}, prefix: :user)
       end
 
-      assert_span("login", attributes: %{"user.id" => 123, "user.name" => "Alice"})
+      span = assert_span("login")
+      assert span.attributes == %{"user.id" => 123, "user.name" => "Alice"}
     end
 
     test "trims leading underscores" do

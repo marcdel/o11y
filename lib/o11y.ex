@@ -96,6 +96,8 @@ defmodule O11y do
     value = SpanAttributes.get(value)
     Tracer.set_attribute(key, value)
     :ok
+  rescue
+    _ -> :error
   end
 
   @doc """
@@ -144,6 +146,8 @@ defmodule O11y do
     |> Tracer.set_attributes()
 
     values
+  rescue
+    _ -> values
   end
 
   @doc """
