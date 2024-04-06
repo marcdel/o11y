@@ -1,5 +1,10 @@
 # O11y
 
+## v0.2.1
+
+- Now handles keyword lists in `O11y.set_attributes/2`.
+- Adds rescues in set_attribute(s) functions to prevent crashes when given invalid data.
+
 ## v0.2.0
 
 - ⚠️ Breaking Change ⚠️: The `O11y.set_attributes/2` function has changed. The first argument, `prefix` has moved into an options keyword list in order to accomodate the `namespace` option as well.
