@@ -212,6 +212,60 @@ defmodule O11yTest do
       assert span.attributes == expected
     end
 
+    test "keyword lists with structs handle structs as usual" do
+      Tracer.with_span "login" do
+        user = %User{id: 123, name: "Alice", email: "alice@email.com"}
+        O11y.set_attributes(user: user, awesome: true)
+      end
+
+      expected = %{
+        "awesome" => true,
+        "user.id" => 123,
+        "user.name" => "Alice"
+      }
+
+      span = assert_span("login")
+      assert span.attributes == expected
+    end
+
+    test "attribute lists with structs handle structs as usual" do
+      Tracer.with_span "login" do
+        user = %User{id: 123, name: "Alice", email: "alice@email.com"}
+        O11y.set_attributes([{"user", user}, {"awesome", true}])
+      end
+
+      expected = %{
+        "awesome" => true,
+        "user.id" => 123,
+        "user.name" => "Alice"
+      }
+
+      span = assert_span("login")
+      assert span.attributes == expected
+    end
+
+    test "lists of tuples with more/less than 2 elements are ignored" do
+      Tracer.with_span "login" do
+        O11y.set_attributes([{:user, 123, "Alice"}])
+        O11y.set_attributes([{:not_awesome}])
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{}
+    end
+
+    test "maps have all their keys added with a prefix" do
+      Tracer.with_span "login" do
+        user = [id: 123, name: "Alice", email: "alice@email.com"]
+        O11y.set_attributes(user)
+      end
+
+      expected = %{"email" => "alice@email.com", "id" => 123, "name" => "Alice"}
+
+      span = assert_span("login")
+      assert span.attributes == expected
+    end
+
     test "ignores values that do not have something that can be used as the key" do
       Tracer.with_span "login" do
         O11y.set_attributes([1, 2, 3])

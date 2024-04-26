@@ -136,7 +136,22 @@ defmodule O11y do
   config :open_telemetry_decorator, :attribute_namespace, "app"
   ```
   """
-  def set_attributes(values, opts \\ []) do
+  def set_attributes(values, opts \\ [])
+
+  def set_attributes(values, opts) when is_list(values) do
+    if Keyword.keyword?(values) or Enum.all?(values, &is_tuple/1) do
+      Enum.each(values, fn
+        {k, v} when is_struct(v) or is_map(v) -> set_attributes(v, Keyword.put(opts, :prefix, k))
+        {k, v} -> set_attribute(k, v, opts)
+      end)
+    end
+
+    values
+  rescue
+    _ -> values
+  end
+
+  def set_attributes(values, opts) do
     namespace = Keyword.get(opts, :namespace) || @attribute_namespace
     obj_prefix = Keyword.get(opts, :prefix)
 

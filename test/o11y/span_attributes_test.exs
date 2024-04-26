@@ -15,7 +15,7 @@ defmodule O11y.SpanAttributesTest do
       defstruct [:id, :name]
     end
 
-    test "maps and structs get converted to keyword lists" do
+    test "maps and structs get converted to attribute lists" do
       assert SpanAttributes.get(%{id: 1}) == [{"id", 1}]
       assert SpanAttributes.get(%{"id" => 1}) == [{"id", 1}]
       assert SpanAttributes.get(%Regular{id: 1, name: "basic"}) == [{"id", 1}, {"name", "basic"}]

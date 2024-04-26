@@ -1,5 +1,9 @@
 # O11y
 
+## v0.2.2
+
+- Now handles attribute lists (lists of key/value tuples) in `O11y.set_attributes/2`.
+
 ## v0.2.1
 
 - Now handles keyword lists in `O11y.set_attributes/2`.
