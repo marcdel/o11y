@@ -3,6 +3,7 @@
 ## v0.2.2
 
 - Now handles attribute lists (lists of key/value tuples) in `O11y.set_attributes/2`.
+- Adjusted the `is_otlp_value` guard to match the `attribute_value` type from `opentelemetry.erl`, minus `tuple()`. Tuple values are dropped by Honeycomb, and possibly other UIs, so we'll continue to `inspect` them for now.
 
 ## v0.2.1
 

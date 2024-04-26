@@ -1,7 +1,7 @@
 defmodule O11y.MixProject do
   use Mix.Project
 
-  @version "0.2.1"
+  @version "0.2.2"
   @github_page "https://github.com/marcdel/o11y"
 
   def project do
