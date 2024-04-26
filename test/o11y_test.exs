@@ -88,7 +88,7 @@ defmodule O11yTest do
         O11y.set_attribute(:type, :admin)
       end
 
-      expected = %{"balance" => 24.75, "enabled?" => true, "id" => 123, "type" => ":admin"}
+      expected = %{"balance" => 24.75, "enabled?" => true, "id" => 123, "type" => :admin}
 
       span = assert_span("checkout")
       assert span.attributes == expected
@@ -111,7 +111,7 @@ defmodule O11yTest do
       end
 
       span = assert_span("login")
-      assert span.attributes == %{"id" => "nil"}
+      assert span.attributes == %{"id" => nil}
     end
 
     test "nil attribute names are ignored" do
@@ -140,7 +140,7 @@ defmodule O11yTest do
       end
 
       span = assert_span("login")
-      assert span.attributes == %{"user.id" => 123, "app.type" => ":admin"}
+      assert span.attributes == %{"user.id" => 123, "app.type" => :admin}
     end
 
     test "avoids doubling up existing prefixes" do

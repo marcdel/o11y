@@ -9,6 +9,8 @@ defmodule O11y.SpanAttributesTest do
       assert SpanAttributes.get("1") == "1"
       assert SpanAttributes.get(true) == true
       assert SpanAttributes.get(1.0) == 1.0
+      assert SpanAttributes.get(:pink) == :pink
+      assert SpanAttributes.get(nil) == nil
     end
 
     defmodule Regular do
@@ -25,10 +27,11 @@ defmodule O11y.SpanAttributesTest do
       assert SpanAttributes.get([{:id, 1}, {:name, "boop"}]) == [{"id", 1}, {"name", "boop"}]
     end
 
+    test "tuples are returned unmodified" do
+    end
+
     test "inspect()s anything else" do
       assert SpanAttributes.get({:error, "too sick bro"}) == "{:error, \"too sick bro\"}"
-      assert SpanAttributes.get(:pink) == ":pink"
-      assert SpanAttributes.get(nil) == "nil"
       assert SpanAttributes.get([1, 2, 3, 4]) == "[1, 2, 3, 4]"
       assert SpanAttributes.get(self()) =~ ~r/#PID<\d+\.\d+\.\d+>/
       assert SpanAttributes.get(fn i -> i + 1 end) =~ ~r/#Function/

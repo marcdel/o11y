@@ -30,7 +30,10 @@ defmodule O11y.Attributes do
   def from_record({:attributes, _, _, _, attributes}), do: attributes
 
   defguard is_otlp_value(value)
-           when is_binary(value) or is_integer(value) or is_boolean(value) or is_float(value)
+           when is_binary(value) or
+                  is_atom(value) or
+                  is_number(value) or
+                  is_boolean(value)
 
   @spec to_record(t()) :: attributes_record()
   def to_record(attributes), do: {:attributes, 128, :infinity, 0, attributes}
