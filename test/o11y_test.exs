@@ -13,6 +13,27 @@ defmodule O11yTest do
     defstruct [:id, :name, :email, :password]
   end
 
+  describe "with_span" do
+    test "forwards name and options to Tracer.with_span" do
+      O11y.with_span("checkout", fn ->
+        O11y.set_attribute(:id, 123)
+      end)
+
+      span = assert_span("checkout")
+      assert span.attributes == %{"id" => 123}
+    end
+
+    test "namespaces attributes given in the start_opts" do
+      O11y.with_span("login", %{attributes: %{id: 123}, namespace: "app"}, fn ->
+        :ok
+      end)
+
+      span = assert_span("login")
+
+      assert span.attributes == %{"app.id" => 123}
+    end
+  end
+
   describe "start_span" do
     test "starts a span with the given name" do
       O11y.start_span("checkout")

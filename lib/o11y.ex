@@ -13,6 +13,38 @@ defmodule O11y do
   @attribute_namespace Application.compile_env(:o11y, :attribute_namespace)
 
   @doc """
+  ⚠️ Felt cute, might delete later ⚠️
+
+  Calls `Tracer.with_span` with the given name and options.
+  The main benefit is that you don't need to require `Tracer` in your module, but without
+  the require we have to take an anonymous function instead of a do block 😞.
+
+  ## Examples:
+
+  ```elixir
+  iex> O11y.with_span "checkout", fn ->
+  iex>   O11y.set_attribute(:id, 123)
+  iex> end
+  ```
+
+  ```elixir
+  iex> O11y.with_span "login", %{attributes: %{id: 123}}, fn ->
+  iex>   :ok
+  iex> end
+  ```
+  """
+  def with_span(name, start_opts \\ %{}, block) do
+    {attributes, opts} = Map.pop(start_opts, :attributes, %{})
+    {namespace, opts} = Map.pop(opts, :namespace)
+    namespace = namespace || @attribute_namespace
+
+    Tracer.with_span name, opts do
+      O11y.set_attributes(attributes, namespace: namespace)
+      block.()
+    end
+  end
+
+  @doc """
   Starts a new span and makes it the current active span of the current process.
 
   This is a little tricky because it actually returns the parent span, not the new span.
