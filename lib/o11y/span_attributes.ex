@@ -53,6 +53,8 @@ defprotocol O11y.SpanAttributes do
 end
 
 defimpl O11y.SpanAttributes, for: Any do
+  import O11y.Attributes, only: [is_otlp_value: 1]
+
   defmacro __deriving__(module, struct, options) do
     fields = Map.keys(struct) -- [:__exception__, :__struct__]
     only = Keyword.get(options, :only, fields)
@@ -72,8 +74,6 @@ defimpl O11y.SpanAttributes, for: Any do
       end
     end
   end
-
-  import O11y.Attributes, only: [is_otlp_value: 1]
 
   def get(thing) when is_otlp_value(thing), do: thing
 

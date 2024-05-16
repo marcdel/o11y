@@ -6,9 +6,7 @@ defmodule O11y do
   require Logger
   require OpenTelemetry.Tracer, as: Tracer
 
-  import O11y.AttributeProcessor
-
-  alias O11y.SpanAttributes
+  alias O11y.AttributeProcessor
 
   @attribute_namespace Application.compile_env(:o11y, :attribute_namespace)
 
@@ -34,12 +32,15 @@ defmodule O11y do
   ```
   """
   def with_span(name, start_opts \\ %{}, block) do
-    {attributes, opts} = Map.pop(start_opts, :attributes, %{})
-    {namespace, opts} = Map.pop(opts, :namespace)
+    {namespace, opts} = Map.pop(start_opts, :namespace)
     namespace = namespace || @attribute_namespace
 
-    Tracer.with_span name, opts do
-      O11y.set_attributes(attributes, namespace: namespace)
+    attributes =
+      start_opts
+      |> Map.get(:attributes, %{})
+      |> AttributeProcessor.process(namespace: namespace)
+
+    Tracer.with_span name, Map.put(opts, :attributes, attributes) do
       block.()
     end
   end
@@ -118,15 +119,10 @@ defmodule O11y do
   ```
   """
   def set_attribute(key, value, opts \\ []) do
-    namespace = Keyword.get(opts, :namespace) || @attribute_namespace
+    [{key, value}]
+    |> AttributeProcessor.process(opts)
+    |> Tracer.set_attributes()
 
-    key =
-      key
-      |> trim_leading()
-      |> prefix(namespace)
-
-    value = SpanAttributes.get(value)
-    Tracer.set_attribute(key, value)
     :ok
   rescue
     _ -> :error
@@ -170,26 +166,9 @@ defmodule O11y do
   """
   def set_attributes(values, opts \\ [])
 
-  def set_attributes(values, opts) when is_list(values) do
-    if Keyword.keyword?(values) or Enum.all?(values, &is_tuple/1) do
-      Enum.each(values, fn
-        {k, v} when is_struct(v) or is_map(v) -> set_attributes(v, Keyword.put(opts, :prefix, k))
-        {k, v} -> set_attribute(k, v, opts)
-      end)
-    end
-
-    values
-  rescue
-    _ -> values
-  end
-
   def set_attributes(values, opts) do
-    namespace = Keyword.get(opts, :namespace) || @attribute_namespace
-    obj_prefix = Keyword.get(opts, :prefix)
-
     values
-    |> SpanAttributes.get()
-    |> Enum.map(fn {key, value} -> {key |> prefix(obj_prefix) |> prefix(namespace), value} end)
+    |> AttributeProcessor.process(opts)
     |> Tracer.set_attributes()
 
     values

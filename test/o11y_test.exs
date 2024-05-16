@@ -115,15 +115,31 @@ defmodule O11yTest do
       assert span.attributes == expected
     end
 
-    test "can't handle structs or maps" do
+    test "prefixes map and struct keys with the given name" do
       Tracer.with_span "login" do
-        O11y.set_attribute(:record, %{id: 1})
+        O11y.set_attribute(:record, %{total: 10.0, items: 3})
         O11y.set_attribute(:user, %User{id: 123, name: "Alice"})
-        O11y.set_attribute(:user, %Regular{id: 123, name: "Alice"})
+
+        O11y.set_attribute(:regular, %Regular{
+          id: 123,
+          name: "Alice",
+          email: "alice@aol.com",
+          password: "hunter2"
+        })
       end
 
       span = assert_span("login")
-      assert span.attributes == %{}
+
+      assert span.attributes == %{
+               "record.items" => 3,
+               "record.total" => 10.0,
+               "regular.email" => "alice@aol.com",
+               "regular.id" => 123,
+               "regular.name" => "Alice",
+               "regular.password" => "hunter2",
+               "user.id" => 123,
+               "user.name" => "Alice"
+             }
     end
 
     test "returns nil values even though they're ignored" do
