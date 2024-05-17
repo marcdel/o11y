@@ -89,6 +89,14 @@ defmodule O11y do
   end
 
   @doc """
+  Calls `Tracer.add_event` with the given name and processed attributes.
+  """
+  def add_event(name, attributes \\ %{}, opts \\ []) do
+    attrs = AttributeProcessor.process(attributes, opts)
+    Tracer.add_event(name, attrs)
+  end
+
+  @doc """
   Sets the given attribute on the current span. If the value is not a valid OTLP type,
   it will be converted to a string with `inspect`.
 

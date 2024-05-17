@@ -100,6 +100,26 @@ defmodule O11yTest do
     end
   end
 
+  describe "add_event" do
+    test "adds an event with the given name to the current span" do
+      Tracer.with_span "checkout" do
+        O11y.add_event("payment_received")
+      end
+
+      span = assert_span("checkout")
+      assert [%{name: "payment_received"}] = span.events
+    end
+
+    test "namespaces attributes given to on the event" do
+      Tracer.with_span "checkout" do
+        O11y.add_event("payment_received", %{id: 123}, namespace: "app")
+      end
+
+      span = assert_span("checkout")
+      assert [%{attributes: %{"app.id" => 123}}] = span.events
+    end
+  end
+
   describe "set_attribute" do
     test "appends the given attribute to the span" do
       Tracer.with_span "checkout" do
