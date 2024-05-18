@@ -1,5 +1,13 @@
 # O11y
 
+## v0.2.3
+
+- Adds `O11y.add_event/2` to add an event to the current span. Given attributes are treated like `O11y.set_attributes/2`.
+- Document how `O11y.set_attributes/2` can be used in pipes.
+- A ✌🏼 refactor ✌🏼 to move the attribute processing logic into the AttributeProcessor module to simplify the O11y module functions.
+  - ⚠️ This actually led to an improvement(?) wherein calling `O11y.set_attribute/1` with a map/struct will cause those map/struct attributes to be prefixed with the given attribute name.
+  - Previously these values would have been discarded. Now `O11y.set_attributes(%{key: "value"}, prefix: "my_prefix")` and `O11y.set_attribute("my_prefix", %{key: "value"})` are equivalent.
+
 ## v0.2.2
 
 - Now handles attribute lists (lists of key/value tuples) in `O11y.set_attributes/2`.
