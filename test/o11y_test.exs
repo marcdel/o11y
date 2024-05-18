@@ -212,6 +212,10 @@ defmodule O11yTest do
   end
 
   describe "set_attributes" do
+    test "attributes are returned unchanged" do
+      assert O11y.set_attributes(%{id: 123, name: "Alice"}) == %{id: 123, name: "Alice"}
+    end
+
     test "maps have all their keys added" do
       Tracer.with_span "login" do
         user = %{id: 123, name: "Alice", email: "user@email.com", password: "password"}
@@ -248,13 +252,32 @@ defmodule O11yTest do
       assert span.attributes == expected
     end
 
-    test "adds struct attributes to the span" do
+    test "derived structs only have allowed attributes added" do
       Tracer.with_span "login" do
         O11y.set_attributes(%User{id: 123, name: "Alice"})
       end
 
       span = assert_span("login")
       assert span.attributes == %{"id" => 123, "name" => "Alice"}
+    end
+
+    test "can be used in pipelines" do
+      Tracer.with_span "login" do
+        %Regular{email: "alice@aol.com", password: "hunter2"}
+        |> O11y.set_attributes(prefix: :user)
+        |> then(fn u -> Map.put(u, :logged_in, true) end)
+        |> O11y.set_attributes(prefix: :logged_in_user)
+      end
+
+      span = assert_span("login")
+
+      assert %{
+               "user.email" => "alice@aol.com",
+               "user.password" => "hunter2",
+               "logged_in_user.email" => "alice@aol.com",
+               "logged_in_user.logged_in" => true,
+               "logged_in_user.password" => "hunter2"
+             } = span.attributes
     end
 
     test "keyword lists have all their keys added" do

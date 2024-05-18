@@ -167,6 +167,21 @@ defmodule O11y do
   {:attributes, 128, :infinity, 0, %{"app.age" => 47, "app.name" => "Steve"}}
   ```
 
+  A prefix can be given that will be prepended to all keys in the attributes map.
+  This can be useful to avoid key collisions, or when calling it in a pipeline (attributes are returned unchanged).
+  ```elixir
+  iex> login = fn user -> Map.put(user, :logged_in_at, DateTime.utc_now()) end
+  ...> checkout = fn _user -> %{items: [:boogers, :farts], total: 420.69} end
+  ...> user = %{name: "Steve", age: 47}
+  ...>
+  ...> user
+  ...> |> O11y.set_attributes(prefix: "user")
+  ...> |> login.()
+  ...> |> O11y.set_attributes(prefix: "authed_user")
+  ...> |> checkout.()
+  ...> |> O11y.set_attributes(prefix: "cart")
+  ```
+
   Namespace can also be set globally via configuration like:
   ```elixir
   config :open_telemetry_decorator, :attribute_namespace, "app"
