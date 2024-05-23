@@ -170,7 +170,7 @@ defmodule O11yTest do
       span = assert_span("login")
 
       assert span.attributes == %{
-                "result" => "{:error, \"too sick bro\"}"
+               "result" => "{:error, \"too sick bro\"}"
              }
     end
 

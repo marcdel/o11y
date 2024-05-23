@@ -1,5 +1,9 @@
 # O11y
 
+## v0.2.4
+
+- `AttributeProcessor.process` now inspects non-otlp type attribute values. e.g. result tuples were being dropped by the exporter and should now be converted to strings.
+
 ## v0.2.3
 
 - Adds `O11y.add_event/2` to add an event to the current span. Given attributes are treated like `O11y.set_attributes/2`.
