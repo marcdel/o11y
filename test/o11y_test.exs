@@ -162,6 +162,18 @@ defmodule O11yTest do
              }
     end
 
+    test "inspects unknown types" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:result, {:error, "too sick bro"})
+      end
+
+      span = assert_span("login")
+
+      assert span.attributes == %{
+                "result" => "{:error, \"too sick bro\"}"
+             }
+    end
+
     test "returns nil values even though they're ignored" do
       Tracer.with_span "login" do
         O11y.set_attribute(:id, nil)

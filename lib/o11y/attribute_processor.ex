@@ -2,6 +2,7 @@ defmodule O11y.AttributeProcessor do
   @moduledoc """
   Functions for manipulating attribute names and values
   """
+  import O11y.Attributes, only: [is_otlp_value: 1]
 
   alias O11y.SpanAttributes
 
@@ -31,7 +32,7 @@ defmodule O11y.AttributeProcessor do
     |> process(opts)
   end
 
-  def process({key, value}, opts) do
+  def process({key, value}, opts) when is_otlp_value(value) do
     namespace = Keyword.get(opts, :namespace) || @attribute_namespace
     prefix = Keyword.get(opts, :prefix)
 
@@ -44,6 +45,8 @@ defmodule O11y.AttributeProcessor do
 
     {key, value}
   end
+
+  def process({key, value}, opts), do: process({key, inspect(value)}, opts)
 
   def prefix(name, prefix) when is_nil(prefix) or prefix == "" do
     name |> to_string() |> trim_leading()
