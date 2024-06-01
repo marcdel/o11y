@@ -25,6 +25,13 @@ defmodule O11y.AttributeProcessor do
     end
   end
 
+  if Code.ensure_loaded?(Decimal) do
+    def process(%Decimal{} = value, opts) do
+      {key, opts} = Keyword.pop(opts, :prefix)
+      process({key, Decimal.to_string(value)}, opts)
+    end
+  end
+
   def process(attributes, opts) when is_struct(attributes) or is_map(attributes) do
     attributes
     |> SpanAttributes.get()

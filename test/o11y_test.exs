@@ -162,6 +162,16 @@ defmodule O11yTest do
              }
     end
 
+    test "converts decimals to string" do
+      Tracer.with_span "checkout" do
+        O11y.set_attribute(:total, Decimal.new("20.75"))
+      end
+
+      span = assert_span("checkout")
+
+      assert span.attributes == %{"total" => "20.75"}
+    end
+
     test "inspects unknown types" do
       Tracer.with_span "login" do
         O11y.set_attribute(:result, {:error, "too sick bro"})

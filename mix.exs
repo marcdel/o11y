@@ -50,7 +50,8 @@ defmodule O11y.MixProject do
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:opentelemetry_exporter, "~> 1.7", only: :test},
       {:opentelemetry_api, "~> 1.3"},
-      {:opentelemetry, "~> 1.4", only: :test, runtime: false}
+      {:opentelemetry, "~> 1.4", only: :test, runtime: false},
+      {:decimal, "~> 2.0", optional: true}
     ]
   end
 
