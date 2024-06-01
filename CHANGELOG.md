@@ -1,5 +1,9 @@
 # O11y
 
+## v0.2.5
+
+- Handles `Decimal` values in `O11y.set_attributes/2` and `O11y.set_attribute/2` by converting them to strings.
+
 ## v0.2.4
 
 - `AttributeProcessor.process` now inspects non-otlp type attribute values. e.g. result tuples were being dropped by the exporter and should now be converted to strings.
