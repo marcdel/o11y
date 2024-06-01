@@ -32,6 +32,26 @@ defmodule O11y.AttributeProcessor do
     end
   end
 
+  def process(%Date{} = value, opts) do
+    {key, opts} = Keyword.pop(opts, :prefix)
+    process({key, Date.to_string(value)}, opts)
+  end
+
+  def process(%Time{} = value, opts) do
+    {key, opts} = Keyword.pop(opts, :prefix)
+    process({key, Time.to_string(value)}, opts)
+  end
+
+  def process(%NaiveDateTime{} = value, opts) do
+    {key, opts} = Keyword.pop(opts, :prefix)
+    process({key, NaiveDateTime.to_string(value)}, opts)
+  end
+
+  def process(%DateTime{} = value, opts) do
+    {key, opts} = Keyword.pop(opts, :prefix)
+    process({key, DateTime.to_string(value)}, opts)
+  end
+
   def process(attributes, opts) when is_struct(attributes) or is_map(attributes) do
     attributes
     |> SpanAttributes.get()

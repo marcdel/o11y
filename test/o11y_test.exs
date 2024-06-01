@@ -172,6 +172,24 @@ defmodule O11yTest do
       assert span.attributes == %{"total" => "20.75"}
     end
 
+    test "converts dates to string" do
+      Tracer.with_span "dates_and_times" do
+        O11y.set_attribute(:date, ~D[2000-01-01])
+        O11y.set_attribute(:time, ~T[23:00:07.001])
+        O11y.set_attribute(:date_time, ~U[2022-01-12 00:01:00.00Z])
+        O11y.set_attribute(:naive_date_time, ~N[2000-01-01 23:00:07])
+      end
+
+      span = assert_span("dates_and_times")
+
+      assert span.attributes == %{
+               "date" => "2000-01-01",
+               "time" => "23:00:07.001",
+               "date_time" => "2022-01-12 00:01:00.00Z",
+               "naive_date_time" => "2000-01-01 23:00:07"
+             }
+    end
+
     test "inspects unknown types" do
       Tracer.with_span "login" do
         O11y.set_attribute(:result, {:error, "too sick bro"})
