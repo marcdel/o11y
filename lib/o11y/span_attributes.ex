@@ -52,6 +52,25 @@ defprotocol O11y.SpanAttributes do
   def get(thing)
 end
 
+if Code.ensure_loaded?(Ecto.Changeset) do
+  defimpl O11y.SpanAttributes, for: Ecto.Changeset do
+    import Ecto.Changeset
+
+    def get(changeset) do
+      error_string =
+        changeset
+        |> traverse_errors(fn {msg, _} -> msg end)
+        |> Enum.map_join(", ", fn {field, errors} -> "#{field}: #{Enum.join(errors, ", ")}" end)
+
+      [
+        {"action", changeset.action},
+        {"valid?", changeset.valid?},
+        {"errors", error_string}
+      ]
+    end
+  end
+end
+
 defimpl O11y.SpanAttributes, for: Any do
   import O11y.Attributes, only: [is_otlp_value: 1]
 

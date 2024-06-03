@@ -190,6 +190,56 @@ defmodule O11yTest do
              }
     end
 
+    defmodule UserSchema do
+      use Ecto.Schema
+      import Ecto.Changeset
+
+      embedded_schema do
+        field(:name, :string)
+        field(:current_password, :string)
+      end
+
+      def changeset(%UserSchema{} = user, attrs \\ %{}) do
+        user
+        |> cast(attrs, [:name, :current_password])
+        |> validate_required([:name, :current_password])
+        |> validate_change(:name, fn :name, _value ->
+          [{:name, "did not change"}]
+        end)
+        |> validate_change(:current_password, fn :current_password, _value ->
+          [{:current_password, "is not valid"}]
+        end)
+      end
+    end
+
+    defmodule Repo do
+      # I'm not fuckin with Repo stuff here so let's just pretend
+      def update(changeset) do
+        Map.put(changeset, :action, :update)
+      end
+    end
+
+    test "converts Postgrex errors to string" do
+      Tracer.with_span "update" do
+        changeset =
+          UserSchema.changeset(%UserSchema{}, %{
+            name: "Alice",
+            current_password: "hunter2"
+          })
+          |> Repo.update()
+
+        O11y.set_attribute(:changeset, changeset)
+      end
+
+      span = assert_span("update")
+
+      assert span.attributes == %{
+               "changeset.action" => :update,
+               "changeset.valid?" => false,
+               "changeset.errors" => "name: did not change, current_password: is not valid"
+             }
+    end
+
     test "inspects unknown types" do
       Tracer.with_span "login" do
         O11y.set_attribute(:result, {:error, "too sick bro"})
