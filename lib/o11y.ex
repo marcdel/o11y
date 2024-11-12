@@ -235,7 +235,7 @@ defmodule O11y do
   end
 
   def record_exception(error) do
-    Logger.warn("O11y.record_exception/1 expects an exception, but got: #{inspect(error)}")
+    Logger.warning("O11y.record_exception/1 expects an exception, but got: #{inspect(error)}")
     set_error(error)
 
     error
