@@ -1,5 +1,10 @@
 # O11y
 
+## v0.2.8
+
+- Update to opentelemetry 1.5.0, opentelemetry_api 1.4.0, and opentelemetry_exporter 1.8.0.
+- Update various other dev dependencies.
+
 ## v0.2.7
 
 - O11y.record_exception handles non-exceptions gracefully. It adds an error to the span and logs a warning.
