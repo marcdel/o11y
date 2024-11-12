@@ -514,6 +514,18 @@ defmodule O11yTest do
       assert event.name == "exception"
       assert %{"exception.message": "something went wrong"} = event.attributes
     end
+
+    test "logs a warning when given something that's not an exception" do
+      log =
+      ExUnit.CaptureLog.capture_log(fn ->
+        Tracer.with_span "checkout" do
+          O11y.record_exception({{:shutdown, :closed}, {GenServer, :call, []}})
+        end
+      end)
+
+      assert log =~ "O11y.record_exception/1 expects an exception, but got:"
+      assert log =~ "{{:shutdown, :closed}, {GenServer, :call, []}}"
+    end
   end
 
   describe "set_error" do

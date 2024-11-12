@@ -234,6 +234,13 @@ defmodule O11y do
     exception
   end
 
+  def record_exception(error) do
+    Logger.warn("O11y.record_exception/1 expects an exception, but got: #{inspect(error)}")
+    set_error(error)
+
+    error
+  end
+
   @doc """
   Sets the status of the current span to error
   """
