@@ -1,5 +1,9 @@
 # O11y
 
+## v0.2.7
+
+- O11y.record_exception handles non-exceptions gracefully. It adds an error to the span and logs a warning.
+
 ## v0.2.6
 
 - Handle date and time values in `O11y.set_attributes/2` and `O11y.set_attribute/2` by converting them to strings.
