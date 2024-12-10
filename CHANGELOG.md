@@ -1,5 +1,13 @@
 # O11y
 
+## v0.2.9
+- Handle named keyword lists in `O11y.set_attributes/2` by prefixing the keys with the given name
+
+```elixir
+O11y.set_attributes(config: [key: "value"])
+%{"config.key" => "value"}
+```
+
 ## v0.2.8
 
 - Update to opentelemetry 1.5.0, opentelemetry_api 1.4.0, and opentelemetry_exporter 1.8.0.
