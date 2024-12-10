@@ -16,8 +16,11 @@ defmodule O11y.AttributeProcessor do
   def process(attributes, opts) when is_list(attributes) do
     if Keyword.keyword?(attributes) or Enum.all?(attributes, &is_tuple/1) do
       Enum.map(attributes, fn
-        {k, v} when is_struct(v) or is_map(v) -> process(v, Keyword.put(opts, :prefix, k))
-        {k, v} -> process({k, v}, opts)
+        {k, v} when is_struct(v) or is_map(v) or is_list(v) ->
+          process(v, Keyword.put(opts, :prefix, k))
+
+        {k, v} ->
+          process({k, v}, opts)
       end)
       |> List.flatten()
     else

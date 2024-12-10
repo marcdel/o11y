@@ -382,6 +382,22 @@ defmodule O11yTest do
       assert span.attributes == expected
     end
 
+    test "named keyword lists have all their keys added" do
+      Tracer.with_span "login" do
+        user = [id: 123, name: "Alice", email: "alice@email.com"]
+        O11y.set_attributes(user: user)
+      end
+
+      expected = %{
+        "user.email" => "alice@email.com",
+        "user.id" => 123,
+        "user.name" => "Alice"
+      }
+
+      span = assert_span("login")
+      assert span.attributes == expected
+    end
+
     test "keyword lists with structs handle structs as usual" do
       Tracer.with_span "login" do
         user = %User{id: 123, name: "Alice", email: "alice@email.com"}
