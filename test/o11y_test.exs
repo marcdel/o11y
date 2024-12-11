@@ -13,6 +13,10 @@ defmodule O11yTest do
     defstruct [:id, :name, :email, :password]
   end
 
+  defmodule Nested do
+    defstruct [:id, :settings]
+  end
+
   describe "with_span" do
     test "forwards name and options to Tracer.with_span" do
       O11y.with_span("checkout", fn ->
@@ -299,6 +303,90 @@ defmodule O11yTest do
       span = assert_span("login")
       assert span.attributes == %{"app.id" => 123, "app.app_id" => 456}
     end
+
+    test "does not infinitely nest map attributes" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:record, %{
+          id: 123,
+          settings: %{
+            tz: "PST",
+            knobs: %{
+              volume: 75,
+              color: %{red: 255, green: 0, blue: 0}
+            }
+          }
+        })
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "color.blue" => 0,
+        "color.green" => 0,
+        "color.red" => 255,
+        "knobs.volume" => 75,
+        "record.id" => 123,
+        "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
+    end
+
+    test "does not infinitely nest struct attributes" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:record, %Nested{
+          id: 123,
+          settings: %{
+            tz: "PST",
+            knobs: %{
+              volume: 75,
+              color: %{red: 255, green: 0, blue: 0}
+            }
+          }
+        })
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "color.blue" => 0,
+        "color.green" => 0,
+        "color.red" => 255,
+        "knobs.volume" => 75,
+        "record.id" => 123,
+        "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
+    end
+
+    test "does not infinitely nest keyword attributes" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:record,
+          id: 123,
+          settings: [
+            tz: "PST",
+            knobs: [
+              volume: 75,
+              color: [red: 255, green: 0, blue: 0]
+            ]
+          ]
+        )
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "color.blue" => 0,
+        "color.green" => 0,
+        "color.red" => 255,
+        "knobs.volume" => 75,
+        "record.id" => 123,
+        "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
+    end
   end
 
   describe "set_attributes" do
@@ -395,6 +483,22 @@ defmodule O11yTest do
       }
 
       span = assert_span("login")
+      assert span.attributes == expected
+    end
+
+    test "named lists of other types are converted to strings" do
+      Tracer.with_span "maths" do
+        numbers = [1, 2, 3]
+        mixed_list = [:ok, {:something, "else"}]
+        O11y.set_attributes(mixed_list: mixed_list, numbers: numbers)
+      end
+
+      expected = %{
+        "mixed_list" => "[:ok, {:something, \"else\"}]",
+        "numbers" => "[1, 2, 3]"
+      }
+
+      span = assert_span("maths")
       assert span.attributes == expected
     end
 
@@ -505,6 +609,96 @@ defmodule O11yTest do
                "slack.user.name" => "Alice",
                "app.type" => "crud"
              }
+    end
+
+    test "does not infinitely nest map attributes" do
+      Tracer.with_span "login" do
+        O11y.set_attributes(
+          record: %{
+            id: 123,
+            settings: %{
+              tz: "PST",
+              knobs: %{
+                volume: 75,
+                color: %{red: 255, green: 0, blue: 0}
+              }
+            }
+          }
+        )
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "color.blue" => 0,
+        "color.green" => 0,
+        "color.red" => 255,
+        "knobs.volume" => 75,
+        "record.id" => 123,
+        "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
+    end
+
+    test "does not infinitely nest struct attributes" do
+      Tracer.with_span "login" do
+        O11y.set_attributes(
+          record: %Nested{
+            id: 123,
+            settings: %{
+              tz: "PST",
+              knobs: %{
+                volume: 75,
+                color: %{red: 255, green: 0, blue: 0}
+              }
+            }
+          }
+        )
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "color.blue" => 0,
+        "color.green" => 0,
+        "color.red" => 255,
+        "knobs.volume" => 75,
+        "record.id" => 123,
+        "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
+    end
+
+    test "does not infinitely nest keyword attributes" do
+      Tracer.with_span "login" do
+        O11y.set_attributes(
+          record: [
+            id: 123,
+            settings: [
+              tz: "PST",
+              knobs: [
+                volume: 75,
+                color: [red: 255, green: 0, blue: 0]
+              ]
+            ]
+          ]
+        )
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "color.blue" => 0,
+        "color.green" => 0,
+        "color.red" => 255,
+        "knobs.volume" => 75,
+        "record.id" => 123,
+        "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
     end
   end
 

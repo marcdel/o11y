@@ -15,14 +15,7 @@ defmodule O11y.AttributeProcessor do
 
   def process(attributes, opts) when is_list(attributes) do
     if Keyword.keyword?(attributes) or Enum.all?(attributes, &is_tuple/1) do
-      Enum.map(attributes, fn
-        {k, v} when is_struct(v) or is_map(v) or is_list(v) ->
-          process(v, Keyword.put(opts, :prefix, k))
-
-        {k, v} ->
-          process({k, v}, opts)
-      end)
-      |> List.flatten()
+      process_keyword_like_attributes(attributes, opts)
     else
       attributes
     end
@@ -99,4 +92,22 @@ defmodule O11y.AttributeProcessor do
 
   def trim_leading("_" <> name), do: name
   def trim_leading(name), do: name
+
+  defp process_keyword_like_attributes(attributes, opts) do
+    Enum.map(attributes, fn
+      {k, v} when is_struct(v) or is_map(v) ->
+        process(v, Keyword.put(opts, :prefix, k))
+
+      {k, v} when is_list(v) ->
+        if Keyword.keyword?(v) or Enum.all?(v, &is_tuple/1) do
+          process_keyword_like_attributes(v, Keyword.put(opts, :prefix, k))
+        else
+          process({k, v}, opts)
+        end
+
+      {k, v} ->
+        process({k, v}, opts)
+    end)
+    |> List.flatten()
+  end
 end
