@@ -9,7 +9,7 @@ defmodule O11y.MixProject do
       app: :o11y,
       version: @version,
       name: "O11y",
-      description: "Generalizable utilities for working with OpenTelemetry in Elixir.",
+      description: "Opinionated utilities for working with OpenTelemetry in Elixir.",
       homepage_url: @github_page,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),

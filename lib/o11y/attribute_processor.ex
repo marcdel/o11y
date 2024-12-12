@@ -7,6 +7,7 @@ defmodule O11y.AttributeProcessor do
   alias O11y.SpanAttributes
 
   @attribute_namespace Application.compile_env(:o11y, :attribute_namespace)
+  @redacted_attributes Application.compile_env(:o11y, :redacted_attributes, [])
 
   @doc """
   Turns structs and maps into lists of tuples and processes them recursively.
@@ -14,8 +15,8 @@ defmodule O11y.AttributeProcessor do
   def process(attributes, opts \\ [])
 
   def process(attributes, opts) when is_list(attributes) do
-    if Keyword.keyword?(attributes) or Enum.all?(attributes, &is_tuple/1) do
-      process_keyword_like_attributes(attributes, opts)
+    if attribute_list?(attributes) do
+      process_attribute_list(attributes, opts)
     else
       attributes
     end
@@ -59,6 +60,8 @@ defmodule O11y.AttributeProcessor do
     namespace = Keyword.get(opts, :namespace) || @attribute_namespace
     prefix = Keyword.get(opts, :prefix)
 
+    value = redact_attribute(key, value, opts)
+
     key =
       key
       |> to_string()
@@ -71,36 +74,62 @@ defmodule O11y.AttributeProcessor do
 
   def process({key, value}, opts), do: process({key, inspect(value)}, opts)
 
-  def prefix(name, prefix) when is_nil(prefix) or prefix == "" do
+  defp redact_attribute(key, value, opts) do
+    redacted_attributes = redacted_attributes(opts)
+
+    if redacted_attribute?(key, redacted_attributes) do
+      "[REDACTED]"
+    else
+      value
+    end
+  end
+
+  defp redacted_attributes(opts) do
+    redacted_attributes = Keyword.get(opts, :redacted_attributes) || @redacted_attributes
+    Enum.map(redacted_attributes, &to_string/1)
+  end
+
+  defp redacted_attribute?(key, redacted_attributes) do
+    key = to_string(key)
+
+    Enum.any?(redacted_attributes, fn redacted_attribute ->
+      String.contains?(key, redacted_attribute)
+    end)
+  end
+
+  defp prefix(name, prefix) when is_nil(prefix) or prefix == "" do
     name |> to_string() |> trim_leading()
   end
 
-  def prefix(name, prefix) do
+  defp prefix(name, prefix) do
     name = name |> to_string() |> trim_leading()
     prefix = prefix |> to_string() |> trim_leading()
 
     if String.starts_with?(name, prefix <> ".") do
       name
     else
-      "#{trim_leading(prefix)}.#{trim_leading(name)}"
+      "#{prefix}.#{name}"
     end
   end
 
-  def trim_leading(name) when is_atom(name) do
-    name |> to_string() |> trim_leading()
+  defp trim_leading("_" <> name), do: name
+  defp trim_leading(name), do: name
+
+  defp attribute_list?(term) do
+    Keyword.keyword?(term) or Enum.all?(term, &kv_tuple?/1)
   end
 
-  def trim_leading("_" <> name), do: name
-  def trim_leading(name), do: name
+  defp kv_tuple?({key, _value}) when is_atom(key) or is_binary(key), do: true
+  defp kv_tuple?(_term), do: false
 
-  defp process_keyword_like_attributes(attributes, opts) do
+  defp process_attribute_list(attributes, opts) do
     Enum.map(attributes, fn
       {k, v} when is_struct(v) or is_map(v) ->
         process(v, Keyword.put(opts, :prefix, k))
 
       {k, v} when is_list(v) ->
-        if Keyword.keyword?(v) or Enum.all?(v, &is_tuple/1) do
-          process_keyword_like_attributes(v, Keyword.put(opts, :prefix, k))
+        if attribute_list?(v) do
+          process_attribute_list(v, Keyword.put(opts, :prefix, k))
         else
           process({k, v}, opts)
         end

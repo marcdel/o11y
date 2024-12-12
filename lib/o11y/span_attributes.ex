@@ -99,15 +99,19 @@ defimpl O11y.SpanAttributes, for: Any do
   # Structs that do not derive the protocol end up here and are turned into maps (which implement Enumerable)
   def get(%_{} = thing) when is_struct(thing), do: thing |> Map.from_struct() |> get()
 
-  def get(thing) when is_map(thing), do: Enum.map(thing, fn {k, v} -> {to_string(k), v} end)
+  def get(thing) when is_map(thing), do: to_attribute_list(thing)
 
   def get(thing) when is_list(thing) do
     if Keyword.keyword?(thing) do
-      Enum.map(thing, fn {k, v} -> {to_string(k), v} end)
+      to_attribute_list(thing)
     else
       inspect(thing)
     end
   end
 
   def get(thing), do: inspect(thing)
+
+  defp to_attribute_list(map_or_list) do
+    Enum.map(map_or_list, fn {k, v} -> {to_string(k), v} end)
+  end
 end

@@ -13,7 +13,7 @@ Convenience functions and other things to (hopefully) make your life easier when
 ## Installation
 
 Add `o11y` to your list of dependencies in `mix.exs`.
-We include the `opentelemetry_api` package, but you'll need to add `opentelemetry` yourself in order to report spans and traces:
+We include the `opentelemetry_api` package, but you'll need to add `opentelemetry`, and `opentelemetry_exporter` yourself in order to report spans and traces:
 
 ```elixir
 def deps do

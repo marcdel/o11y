@@ -387,6 +387,18 @@ defmodule O11yTest do
 
       assert span.attributes == expected
     end
+
+    test "redacts the value of attributes given in the config or opts" do
+      redacted_attributes = [:token]
+
+      Tracer.with_span "login" do
+        O11y.set_attribute(:password, "hunter2", redacted_attributes: redacted_attributes)
+        O11y.set_attribute(:token, "ABC123", redacted_attributes: redacted_attributes)
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"password" => "hunter2", "token" => "[REDACTED]"}
+    end
   end
 
   describe "set_attributes" do
@@ -696,6 +708,39 @@ defmodule O11yTest do
         "knobs.volume" => 75,
         "record.id" => 123,
         "settings.tz" => "PST"
+      }
+
+      assert span.attributes == expected
+    end
+
+    test "redacts the value of attributes given in the config or opts" do
+      redacted_attributes = [:token, :email, :password]
+
+      Tracer.with_span "login" do
+        O11y.set_attributes([counter: 7, token: "ABC123"],
+          redacted_attributes: redacted_attributes
+        )
+
+        O11y.set_attributes(
+          %Regular{
+            id: 123,
+            name: "Alice",
+            email: "alice@cool.cucumber",
+            password: "hunter2"
+          },
+          redacted_attributes: redacted_attributes
+        )
+      end
+
+      span = assert_span("login")
+
+      expected = %{
+        "password" => "[REDACTED]",
+        "token" => "[REDACTED]",
+        "counter" => 7,
+        "email" => "[REDACTED]",
+        "id" => 123,
+        "name" => "Alice"
       }
 
       assert span.attributes == expected
