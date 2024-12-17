@@ -294,6 +294,15 @@ defmodule O11yTest do
       assert span.attributes == %{"user.id" => 123, "app.type" => :admin}
     end
 
+    test "namespaces struct attributes with the given value" do
+      Tracer.with_span "login" do
+        O11y.set_attribute(:user, %User{id: 123, name: "Alice"}, namespace: "app")
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"app.user.id" => 123, "app.user.name" => "Alice"}
+    end
+
     test "avoids doubling up existing prefixes" do
       Tracer.with_span "login" do
         O11y.set_attribute("app.id", 123, namespace: "app")
@@ -388,16 +397,29 @@ defmodule O11yTest do
       assert span.attributes == expected
     end
 
-    test "redacts the value of attributes given in the config or opts" do
-      redacted_attributes = [:token]
+    test "filters out attributes given in the config or opts" do
+      filtered_attributes = [:token]
 
       Tracer.with_span "login" do
-        O11y.set_attribute(:password, "hunter2", redacted_attributes: redacted_attributes)
-        O11y.set_attribute(:token, "ABC123", redacted_attributes: redacted_attributes)
+        O11y.set_attribute(:password, "hunter2", filtered_attributes: filtered_attributes)
+        O11y.set_attribute(:token, "ABC123", filtered_attributes: filtered_attributes)
       end
 
       span = assert_span("login")
-      assert span.attributes == %{"password" => "hunter2", "token" => "[REDACTED]"}
+      assert span.attributes == %{"password" => "hunter2"}
+    end
+
+    test "filtered attributes can be strings or atoms" do
+      filtered_attributes = [:token, "total"]
+
+      Tracer.with_span "login" do
+        O11y.set_attribute(:password, "hunter2", filtered_attributes: filtered_attributes)
+        O11y.set_attribute(:token, "ABC123", filtered_attributes: filtered_attributes)
+        O11y.set_attribute(:total, 2.99, filtered_attributes: filtered_attributes)
+      end
+
+      span = assert_span("login")
+      assert span.attributes == %{"password" => "hunter2"}
     end
   end
 
@@ -713,12 +735,12 @@ defmodule O11yTest do
       assert span.attributes == expected
     end
 
-    test "redacts the value of attributes given in the config or opts" do
-      redacted_attributes = [:token, :email, :password]
+    test "filters out attributes given in the config or opts" do
+      filtered_attributes = [:token, :email, :password]
 
       Tracer.with_span "login" do
         O11y.set_attributes([counter: 7, token: "ABC123"],
-          redacted_attributes: redacted_attributes
+          filtered_attributes: filtered_attributes
         )
 
         O11y.set_attributes(
@@ -728,17 +750,14 @@ defmodule O11yTest do
             email: "alice@cool.cucumber",
             password: "hunter2"
           },
-          redacted_attributes: redacted_attributes
+          filtered_attributes: filtered_attributes
         )
       end
 
       span = assert_span("login")
 
       expected = %{
-        "password" => "[REDACTED]",
-        "token" => "[REDACTED]",
         "counter" => 7,
-        "email" => "[REDACTED]",
         "id" => 123,
         "name" => "Alice"
       }

@@ -7,7 +7,7 @@ defmodule O11y.AttributeProcessor do
   alias O11y.SpanAttributes
 
   @attribute_namespace Application.compile_env(:o11y, :attribute_namespace)
-  @redacted_attributes Application.compile_env(:o11y, :redacted_attributes, [])
+  @filtered_attributes Application.compile_env(:o11y, :filtered_attributes, [])
 
   @doc """
   Turns structs and maps into lists of tuples and processes them recursively.
@@ -60,8 +60,6 @@ defmodule O11y.AttributeProcessor do
     namespace = Keyword.get(opts, :namespace) || @attribute_namespace
     prefix = Keyword.get(opts, :prefix)
 
-    value = redact_attribute(key, value, opts)
-
     key =
       key
       |> to_string()
@@ -69,32 +67,25 @@ defmodule O11y.AttributeProcessor do
       |> prefix(prefix)
       |> prefix(namespace)
 
-    {key, value}
+    unless filtered_attribute?(key, opts) do
+      {key, value}
+    end
   end
 
   def process({key, value}, opts), do: process({key, inspect(value)}, opts)
 
-  defp redact_attribute(key, value, opts) do
-    redacted_attributes = redacted_attributes(opts)
-
-    if redacted_attribute?(key, redacted_attributes) do
-      "[REDACTED]"
-    else
-      value
-    end
-  end
-
-  defp redacted_attributes(opts) do
-    redacted_attributes = Keyword.get(opts, :redacted_attributes) || @redacted_attributes
-    Enum.map(redacted_attributes, &to_string/1)
-  end
-
-  defp redacted_attribute?(key, redacted_attributes) do
+  defp filtered_attribute?(key, opts) do
+    filtered_attributes = filtered_attributes(opts)
     key = to_string(key)
 
-    Enum.any?(redacted_attributes, fn redacted_attribute ->
-      String.contains?(key, redacted_attribute)
+    Enum.any?(filtered_attributes, fn filtered_attribute ->
+      String.contains?(key, filtered_attribute)
     end)
+  end
+
+  defp filtered_attributes(opts) do
+    filtered_attributes = Keyword.get(opts, :filtered_attributes) || @filtered_attributes
+    Enum.map(filtered_attributes, &to_string/1)
   end
 
   defp prefix(name, prefix) when is_nil(prefix) or prefix == "" do
@@ -138,5 +129,6 @@ defmodule O11y.AttributeProcessor do
         process({k, v}, opts)
     end)
     |> List.flatten()
+    |> Enum.reject(&is_nil/1)
   end
 end
