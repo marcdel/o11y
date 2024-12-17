@@ -1,6 +1,15 @@
 # O11y
 
+## v0.2.10
+
+- Adds `filtered_attributes` configuration option to allow for filtering out attributes from spans. This is useful for removing sensitive data from spans before they are sent to a trace backend.
+
+```elixir
+config :o11y, :filtered_attributes, ["password", "secret", "token", "email"]
+```
+
 ## v0.2.9
+
 - Handle named keyword lists in `O11y.set_attributes/2` by prefixing the keys with the given name
 
 ```elixir
