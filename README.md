@@ -110,6 +110,14 @@ Events are essentially structured log lines that can be associated to a span. Th
 O11y.add_event("Something happened", %{some: "context", what: "happened"})
 ```
 
+### Baggage Processor
+
+Baggage is a way to pass data between spans in a trace. The `O11y.BaggageProcessor` module will include any attributes added to the baggage to all spans created in that context.
+
+```elixir
+config(:opentelemetry, :processors, [{O11y.BaggageProcessor, %{}}])
+```
+
 ## Configuration
 
 ### Attribute Namespace
