@@ -51,4 +51,8 @@ defmodule O11y.Link do
       tracestate: tracestate
     }
   end
+
+  def to_record(%__MODULE__{trace_id: trace_id, span_id: span_id, attributes: attributes, tracestate: tracestate}) do
+    {:link, trace_id, span_id, Attributes.to_record(attributes), tracestate}
+  end
 end

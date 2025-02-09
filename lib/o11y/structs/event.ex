@@ -45,4 +45,8 @@ defmodule O11y.Event do
       attributes: Attributes.from_record(attributes)
     }
   end
+
+  def to_record(%__MODULE__{name: name, native_time: native_time, attributes: attributes}) do
+    {:event, native_time, name, Attributes.to_record(attributes)}
+  end
 end

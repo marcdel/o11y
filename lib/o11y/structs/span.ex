@@ -188,6 +188,27 @@ defmodule O11y.Span do
     }
   end
 
+  def to_record(span_struct) do
+    {
+      :span,
+      span_struct.trace_id,
+      span_struct.span_id,
+      span_struct.tracestate,
+      span_struct.parent_span_id,
+      span_struct.name,
+      span_struct.kind,
+      span_struct.start_time,
+      span_struct.end_time,
+      Attributes.to_record(span_struct.attributes),
+      Events.to_record(span_struct.events),
+      Links.to_record(span_struct.links),
+      Status.to_record(span_struct.status),
+      span_struct.trace_flags,
+      span_struct.is_recording,
+      span_struct.instrumentation_scope
+    }
+  end
+
   defp duration(start_time, end_time) when is_integer(start_time) and is_integer(end_time) do
     System.convert_time_unit(end_time - start_time, :native, :millisecond)
   end

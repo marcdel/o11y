@@ -46,4 +46,10 @@ defmodule O11y.Status do
       message: message
     }
   end
+
+  def to_record(nil), do: :undefined
+
+  def to_record(%__MODULE__{code: code, message: message}) do
+    {:status, code, message}
+  end
 end

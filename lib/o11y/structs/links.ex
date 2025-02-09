@@ -42,4 +42,7 @@ defmodule O11y.Links do
   def from_record({:links, _, _, _, _, links}) do
     Enum.map(links, &Link.from_record/1)
   end
+
+  def to_record(nil), do: :undefined
+  def to_record(links), do: {:links, 128, 128, :infinity, 0, Enum.map(links, &Link.to_record/1)}
 end

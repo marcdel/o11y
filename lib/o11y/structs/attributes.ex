@@ -25,7 +25,7 @@ defmodule O11y.Attributes do
   %{key: "value"}
   ```
   """
-  @spec from_record(attributes_record()) :: t()
+  @spec from_record(attributes_record() | :undefined) :: t()
   def from_record(:undefined), do: %{}
   def from_record({:attributes, _, _, _, attributes}), do: attributes
 
@@ -35,6 +35,7 @@ defmodule O11y.Attributes do
                   is_number(value) or
                   is_boolean(value)
 
-  @spec to_record(t()) :: attributes_record()
+  @spec to_record(t()) :: attributes_record() | :undefined
+  def to_record(nil), do: :undefined
   def to_record(attributes), do: {:attributes, 128, :infinity, 0, attributes}
 end
