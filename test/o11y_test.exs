@@ -766,6 +766,63 @@ defmodule O11yTest do
     end
   end
 
+  describe "set_global_attribute" do
+    test "inspects attribute values since baggage needs to be strings" do
+      O11y.set_global_attribute(:id, 123)
+      O11y.set_global_attribute(:enabled?, true)
+      O11y.set_global_attribute(:balance, 24.75)
+      O11y.set_global_attribute(:type, :admin)
+
+      expected = %{
+        "balance" => {"24.75", []},
+        "enabled?" => {"true", []},
+        "id" => {"123", []},
+        "type" => {":admin", []}
+      }
+
+      baggage = OpenTelemetry.Baggage.get_all()
+      assert baggage == expected
+    end
+
+    test "uses the same attribute processor as set_attribute" do
+      user = %User{id: 123, name: "Alice", email: "alice@email.com", password: "abc123"}
+      O11y.set_global_attribute(:user, user)
+
+      baggage = OpenTelemetry.Baggage.get_all()
+      assert baggage == %{"user.id" => {"123", []}, "user.name" => {"Alice", []}}
+    end
+  end
+
+  describe "set_global_attributes" do
+    test "inspects attribute values since baggage needs to be strings" do
+      O11y.set_global_attributes(id: 123, enabled?: true, balance: 24.75, type: :admin)
+
+      expected = %{
+        "balance" => {"24.75", []},
+        "enabled?" => {"true", []},
+        "id" => {"123", []},
+        "type" => {":admin", []}
+      }
+
+      baggage = OpenTelemetry.Baggage.get_all()
+      assert baggage == expected
+    end
+
+    test "uses the same attribute processor as set_attribute" do
+      user = %User{id: 123, name: "Alice", email: "alice@email.com", password: "abc123"}
+      O11y.set_global_attributes(user: user)
+
+      baggage = OpenTelemetry.Baggage.get_all()
+      assert baggage == %{"user.id" => {"123", []}, "user.name" => {"Alice", []}}
+
+      OpenTelemetry.Baggage.clear()
+
+      O11y.set_global_attributes(user)
+      baggage = OpenTelemetry.Baggage.get_all()
+      assert baggage == %{"id" => {"123", []}, "name" => {"Alice", []}}
+    end
+  end
+
   describe "record_exception" do
     test "sets the span status to error" do
       Tracer.with_span "checkout" do

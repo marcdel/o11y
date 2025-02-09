@@ -36,7 +36,7 @@ defmodule O11y.BaggageProcessor do
   @type config :: any()
 
   @type span :: OpenTelemetry.span()
-  @type ctx :: OpenTelemetry.ctx()
+  @type ctx :: :otel_ctx.t()
   @type attrs :: OpenTelemetry.attributes_map()
   @type on_end_result :: true | :dropped | {:error, :invalid_span} | {:error, :no_export_buffer}
 

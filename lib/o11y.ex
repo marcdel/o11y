@@ -187,9 +187,7 @@ defmodule O11y do
   config :open_telemetry_decorator, :attribute_namespace, "app"
   ```
   """
-  def set_attributes(values, opts \\ [])
-
-  def set_attributes(values, opts) do
+  def set_attributes(values, opts \\ []) do
     values
     |> AttributeProcessor.process(opts)
     |> Tracer.set_attributes()
@@ -197,6 +195,58 @@ defmodule O11y do
     values
   rescue
     _ -> values
+  end
+
+  @doc """
+  Sets the given key-value pair as a baggage attribute on the current trace context.
+  These attributes can then be added to spans automatically using the O11y.BaggageProcessor and propagated across services.
+
+  ## Examples:
+
+  ```elixir
+  iex> O11y.set_global_attribute("user_id", 123)
+  :ok
+  ```
+
+  ```elixir
+  iex> O11y.set_global_attribute("user_id", 123, namespace: "cool_app")
+  :ok
+  ```
+  """
+  def set_global_attribute(key, value, opts \\ []) do
+    set_global_attributes([{key, value}], opts)
+
+    :ok
+  end
+
+  @doc """
+  Sets the given key-value pairs as baggage attributes on the current trace context.
+  These attributes can then be added to spans automatically using the O11y.BaggageProcessor and propagated across services.
+
+  ## Examples:
+
+  ```elixir
+  iex> O11y.set_global_attributes(%{id: 123, name: "Alice"})
+  %{id: 123, name: "Alice"}
+  ```
+
+  ```elixir
+  iex> O11y.set_global_attributes(%{name: "Steve", age: 47}, prefix: "user")
+  %{name: "Steve", age: 47}
+  ```
+  """
+  def set_global_attributes(attributes, opts \\ []) do
+    attributes
+    |> AttributeProcessor.process(opts)
+    |> Enum.map(fn
+      {k, v} when is_binary(v) -> {k, v}
+      {k, v} -> {k, inspect(v)}
+    end)
+    |> OpenTelemetry.Baggage.set()
+
+    attributes
+  rescue
+    _ -> attributes
   end
 
   @doc """

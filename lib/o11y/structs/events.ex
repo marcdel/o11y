@@ -42,5 +42,7 @@ defmodule O11y.Events do
   end
 
   def to_record(nil), do: {:events, 128, 128, :infinity, 0, []}
-  def to_record(events), do: {:events, 128, 128, :infinity, 0, Enum.map(events, &Event.to_record/1)}
+
+  def to_record(events),
+    do: {:events, 128, 128, :infinity, 0, Enum.map(events, &Event.to_record/1)}
 end
