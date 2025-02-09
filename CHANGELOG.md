@@ -1,5 +1,13 @@
 # O11y
 
+## v0.2.11
+
+- Adds `O11y.BaggageProcessor` module which, when configured as a span processor, will include any attributes added to the baggage to all spans created in that context.
+- Adds `O11y.set_global_attribute/2` and `O11y.set_global_attributes/1` functions to add attributes to the baggage.
+- Updates the credo, decimal, and ex_doc dependencies.
+- Adds `opentelemetry` as a runtime dependency because the baggage processor needs to implement the `otel_span_processor` behavior which is defined by the SDK.
+  - ⚠️This may mean that you need to override/remove your `opentelemetry` dependency if you're using a different version than the one that `o11y` is using. ⚠️
+
 ## v0.2.10
 
 - Adds `filtered_attributes` configuration option to allow for filtering out attributes from spans. This is useful for removing sensitive data from spans before they are sent to a trace backend.
