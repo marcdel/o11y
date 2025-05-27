@@ -28,11 +28,10 @@ defmodule O11y.BaggageProcessor do
   ```
   """
 
-  @behaviour :otel_span_processor
-
   alias O11y.Span
 
-  # what do we need to do with this?
+  # This is here for implementation specific configuration.
+  # We're not currently using it, but would be useful for e.g. filtering attributes and spans.
   @type config :: any()
 
   @type span :: OpenTelemetry.span()
@@ -62,8 +61,10 @@ defmodule O11y.BaggageProcessor do
   @spec add_attributes(span(), attrs()) :: span()
   defp add_attributes(span_record, baggage_attributes) do
     span = Span.from_record(span_record)
+
     new_attributes = Map.merge(baggage_attributes, span.attributes)
     updated_span = Map.put(span, :attributes, new_attributes)
+
     Span.to_record(updated_span)
   end
 end
