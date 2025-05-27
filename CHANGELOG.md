@@ -1,5 +1,9 @@
 # O11y
 
+## v0.2.12
+
+- Removes `opentelemetry` as a runtime dependency.
+
 ## v0.2.11
 
 - Adds `O11y.BaggageProcessor` module which, when configured as a span processor, will include any attributes added to the baggage to all spans created in that context.
