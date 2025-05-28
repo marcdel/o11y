@@ -28,7 +28,7 @@ jobs:
           elixir-version: ${{matrix.elixir}}
           otp-version: ${{matrix.otp}}
       - name: Restore dependencies cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: deps
         with:
@@ -37,7 +37,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-${{ env.cache-name }}-
       - name: Cache _build
-        uses: actions/cache@v1.1.2
+        uses: actions/cache@v4
         env:
           cache-name: _build
         with:
