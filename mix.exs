@@ -15,6 +15,7 @@ defmodule O11y.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       consolidate_protocols: Mix.env() == :prod,
+      dialyzer: [plt_add_apps: [:mix]],
       docs: docs(),
       deps: deps(),
       package: package()
@@ -52,7 +53,8 @@ defmodule O11y.MixProject do
       {:opentelemetry_api, "~> 1.4"},
       {:opentelemetry, "~> 1.5", only: :test, runtime: false},
       {:decimal, "~> 2.0", optional: true},
-      {:ecto, "~> 3.0", optional: true}
+      {:ecto, "~> 3.0", optional: true},
+      {:igniter, "~> 0.6", optional: true}
     ]
   end
 

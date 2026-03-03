@@ -12,6 +12,36 @@ Convenience functions and other things to (hopefully) make your life easier when
 
 ## Installation
 
+### Using Igniter (Recommended)
+
+Install the [Igniter](https://hex.pm/packages/igniter) archive if you haven't already (running it again won't hurt):
+
+```bash
+mix archive.install hex igniter_new
+```
+
+Then set up o11y and all of its OpenTelemetry dependencies automatically:
+
+```bash
+mix igniter.install o11y
+```
+
+This will add the required dependencies, configure dev and runtime exporters, and inject setup calls into your `Application` module if you're using Phoenix, Ecto, or Cowboy/Bandit.
+
+To also install [open_telemetry_decorator](https://github.com/marcdel/open_telemetry_decorator):
+
+```bash
+mix igniter.install o11y --with-decorator
+```
+
+To configure exporters for [Honeycomb](https://www.honeycomb.io/) (reads API key from `HONEYCOMB_KEY` env var):
+
+```bash
+mix igniter.install o11y --exporter honeycomb
+```
+
+### Manual
+
 Add `o11y` to your list of dependencies in `mix.exs`.
 We include the `opentelemetry_api` package, but you'll need to add `opentelemetry`, and `opentelemetry_exporter` yourself in order to report spans and traces:
 
