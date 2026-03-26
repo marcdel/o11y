@@ -1,5 +1,9 @@
 # O11y
 
+## v0.3.0
+
+- Adds an [Igniter](https://hex.pm/packages/igniter) installer (`mix igniter.install o11y`) that sets up OpenTelemetry packages, configuration, and a `Tracer` module for your project.
+
 ## v0.2.12
 
 - Removes `opentelemetry` as a runtime dependency.
